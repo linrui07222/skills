@@ -1,0 +1,602 @@
+<template>
+  <div class="page" style="width:480px;">
+    <!-- 顶部状态栏 -->
+    <div class="top-bar">
+      <div style="flex-direction:column;">
+        <div class="row">
+          <text class="top-bar-text">第{{character.year}}年</text>
+          <text class="top-bar-text" style="margin-left:8px;">第{{character.week}}周</text>
+          <text class="top-bar-text" style="margin-left:8px;">{{dayName}}</text>
+          <text class="top-bar-value" style="margin-left:8px;">{{slotName}}</text>
+        </div>
+        <div class="row" style="margin-top:4px;">
+          <div class="badge" if="{{identityName}}">
+            <text class="badge-text">{{identityEmoji}} {{identityName}}</text>
+          </div>
+          <div class="badge-ng" if="{{isNGPlus}}">
+            <text class="badge-ng-text">NG+{{playthrough}}</text>
+          </div>
+        </div>
+      </div>
+      <div style="flex-direction:column; align-items:flex-end;">
+        <text class="top-bar-text">{{character.name}}</text>
+      </div>
+    </div>
+
+    <!-- 精力/压力/幸福度条 -->
+    <div style="padding:6px 16px; width:448px; background-color:#0F172A;">
+      <div class="row-between" style="margin-bottom:4px;">
+        <text style="font-size:11px; color:#22C55E;">⚡ 精力 {{character.energy}}/{{character.maxEnergy}}</text>
+        <div class="progress-bar" style="width:140px;">
+          <div class="progress-fill progress-energy" style="width:{{energyPercent}}%;"></div>
+        </div>
+      </div>
+      <div class="row-between" style="margin-bottom:4px;">
+        <text style="font-size:11px; color:#EF4444;">😰 压力 {{character.stress}}</text>
+        <div class="progress-bar" style="width:140px;">
+          <div class="progress-fill progress-stress" style="width:{{character.stress}}%;"></div>
+        </div>
+      </div>
+      <div class="row-between">
+        <text style="font-size:11px; color:#F59E0B;">😊 幸福 {{character.happiness}}</text>
+        <div class="progress-bar" style="width:140px;">
+          <div class="progress-fill progress-happiness" style="width:{{character.happiness}}%;"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 校园地图 -->
+    <div style="flex-direction:row; flex-wrap:wrap; justify-content:center; padding:8px 8px; width:464px;">
+      <div class="map-btn" if="{{currentLocation!=='classroom'}}" onclick="onLocation('classroom')">
+        <text style="font-size:22px;">🏫</text>
+        <text class="map-btn-text">教室</text>
+      </div>
+      <div class="map-btn-active" if="{{currentLocation==='classroom'}}">
+        <text style="font-size:22px;">🏫</text>
+        <text class="map-btn-text">教室</text>
+      </div>
+
+      <div class="map-btn" if="{{currentLocation!=='library'}}" onclick="onLocation('library')">
+        <text style="font-size:22px;">📚</text>
+        <text class="map-btn-text">图书馆</text>
+      </div>
+      <div class="map-btn-active" if="{{currentLocation==='library'}}">
+        <text style="font-size:22px;">📚</text>
+        <text class="map-btn-text">图书馆</text>
+      </div>
+
+      <div class="map-btn" if="{{currentLocation!=='cafeteria'}}" onclick="onLocation('cafeteria')">
+        <text style="font-size:22px;">🍽️</text>
+        <text class="map-btn-text">食堂</text>
+      </div>
+      <div class="map-btn-active" if="{{currentLocation==='cafeteria'}}">
+        <text style="font-size:22px;">🍽️</text>
+        <text class="map-btn-text">食堂</text>
+      </div>
+
+      <div class="map-btn" if="{{currentLocation!=='gym'}}" onclick="onLocation('gym')">
+        <text style="font-size:22px;">🏃</text>
+        <text class="map-btn-text">体育馆</text>
+      </div>
+      <div class="map-btn-active" if="{{currentLocation==='gym'}}">
+        <text style="font-size:22px;">🏃</text>
+        <text class="map-btn-text">体育馆</text>
+      </div>
+
+      <div class="map-btn" if="{{currentLocation!=='club'}}" onclick="onLocation('club')">
+        <text style="font-size:22px;">🎭</text>
+        <text class="map-btn-text">社团</text>
+      </div>
+      <div class="map-btn-active" if="{{currentLocation==='club'}}">
+        <text style="font-size:22px;">🎭</text>
+        <text class="map-btn-text">社团</text>
+      </div>
+
+      <div class="map-btn" if="{{currentLocation!=='home'}}" onclick="onLocation('home')">
+        <text style="font-size:22px;">🏠</text>
+        <text class="map-btn-text">家</text>
+      </div>
+      <div class="map-btn-active" if="{{currentLocation==='home'}}">
+        <text style="font-size:22px;">🏠</text>
+        <text class="map-btn-text">家</text>
+      </div>
+
+      <div class="map-btn" if="{{currentLocation!=='romance'}}" onclick="onLocation('romance')">
+        <text style="font-size:22px;">💕</text>
+        <text class="map-btn-text">恋爱</text>
+      </div>
+      <div class="map-btn-active" if="{{currentLocation==='romance'}}">
+        <text style="font-size:22px;">💕</text>
+        <text class="map-btn-text">恋爱</text>
+      </div>
+
+      <div class="map-btn" if="{{currentLocation!=='schedule'}}" onclick="onLocation('schedule')">
+        <text style="font-size:22px;">📋</text>
+        <text class="map-btn-text">课程表</text>
+      </div>
+      <div class="map-btn-active" if="{{currentLocation==='schedule'}}">
+        <text style="font-size:22px;">📋</text>
+        <text class="map-btn-text">课程表</text>
+      </div>
+
+      <div class="map-btn" if="{{currentLocation!=='achievements'}}" onclick="onLocation('achievements')">
+        <text style="font-size:22px;">🏆</text>
+        <text class="map-btn-text">成就</text>
+      </div>
+      <div class="map-btn-active" if="{{currentLocation==='achievements'}}">
+        <text style="font-size:22px;">🏆</text>
+        <text class="map-btn-text">成就</text>
+      </div>
+
+      <div class="map-btn" if="{{currentLocation!=='shop'}}" onclick="onLocation('shop')">
+        <text style="font-size:22px;">🛒</text>
+        <text class="map-btn-text">商店</text>
+      </div>
+      <div class="map-btn-active" if="{{currentLocation==='shop'}}">
+        <text style="font-size:22px;">🛒</text>
+        <text class="map-btn-text">商店</text>
+      </div>
+    </div>
+
+    <!-- 位置面板 -->
+    <div style="padding:4px 16px; width:448px; flex:1;">
+      <!-- 教室 -->
+      <div if="{{currentLocation==='classroom'}}" style="flex-direction:column;">
+        <text class="heading" style="font-size:18px;">🏫 教室</text>
+        <div style="flex-direction:row; flex-wrap:wrap; justify-content:center;">
+          <div class="btn-small btn-small-primary" onclick="onAttendClass($idx)" for="{{subjectList}}" style="margin:3px;">
+            <text class="btn-small-text">{{$item.icon}} {{$item.name}}</text>
+          </div>
+        </div>
+      </div>
+
+      <!-- 图书馆 -->
+      <div if="{{currentLocation==='library'}}" style="flex-direction:column;">
+        <text class="heading" style="font-size:18px;">📚 图书馆</text>
+        <div style="flex-direction:row; flex-wrap:wrap; justify-content:center;">
+          <div class="btn-small btn-small-primary" onclick="onStudy($idx)" for="{{subjectList}}" style="margin:3px;">
+            <text class="btn-small-text">📖 自习{{$item.name}}</text>
+          </div>
+        </div>
+        <div style="flex-direction:row; flex-wrap:wrap; justify-content:center; margin-top:6px;">
+          <div class="btn-small btn-small-secondary" onclick="onDoHomework($idx)" for="{{subjectList}}" style="margin:3px;">
+            <text class="btn-small-text-light">📝 作业{{$item.name}}</text>
+          </div>
+        </div>
+      </div>
+
+      <!-- 食堂 -->
+      <div if="{{currentLocation==='cafeteria'}}" style="flex-direction:column;">
+        <text class="heading" style="font-size:18px;">🍽️ 食堂</text>
+        <div style="flex-direction:row; flex-wrap:wrap; justify-content:center;">
+          <div class="btn-small btn-small-primary" onclick="onSocialize($idx)" for="{{classmateList}}" style="margin:3px;">
+            <text class="btn-small-text">{{$item.portrait}} {{$item.name}}</text>
+          </div>
+        </div>
+      </div>
+
+      <!-- 体育馆 -->
+      <div if="{{currentLocation==='gym'}}" style="flex-direction:column;">
+        <text class="heading" style="font-size:18px;">🏃 体育馆</text>
+        <div class="btn btn-primary" style="width:200px;" onclick="onExercise">
+          <text class="btn-primary-text">💪 锻炼</text>
+        </div>
+      </div>
+
+      <!-- 社团 -->
+      <div if="{{currentLocation==='club'}}" style="flex-direction:column;">
+        <text class="heading" style="font-size:18px;">🎭 社团</text>
+        <div if="{{joinedClubs.length===0}}" style="margin-top:8px;">
+          <text class="small-text">你还没有加入任何社团</text>
+          <div style="flex-direction:row; flex-wrap:wrap; justify-content:center; margin-top:8px;">
+            <div class="btn-small btn-small-primary" onclick="onJoinClub($idx)" for="{{allClubs}}" style="margin:3px;">
+              <text class="btn-small-text">{{$item.icon}} 加入{{$item.name}}</text>
+            </div>
+          </div>
+        </div>
+        <div if="{{joinedClubs.length>0}}">
+          <div class="card" for="{{joinedClubs}}" style="width:420px; margin:4px 0;">
+            <div class="row-between">
+              <text style="font-size:14px; font-weight:bold; color:#F1F5F9;">{{$item.icon}} {{$item.name}}</text>
+              <text style="font-size:12px; color:#F59E0B;">技能: {{$item.skill}}</text>
+            </div>
+            <div class="progress-bar" style="margin-top:4px;">
+              <div class="progress-fill progress-mastery" style="width:{{$item.skill}}%;"></div>
+            </div>
+            <div class="row" style="margin-top:6px;">
+              <div class="btn-small btn-small-primary" onclick="onAttendClub($idx)" style="margin-right:8px;">
+                <text class="btn-small-text">参加活动</text>
+              </div>
+              <div class="btn-small btn-small-secondary" onclick="onLeaveClub($idx)">
+                <text class="btn-small-text-light">退出</text>
+              </div>
+            </div>
+          </div>
+          <div if="{{joinedClubs.length<clubLimit}}" style="margin-top:8px;">
+            <text class="small-text">加入更多社团：</text>
+            <div style="flex-direction:row; flex-wrap:wrap; justify-content:center; margin-top:4px;">
+              <div class="btn-small btn-small-secondary" onclick="onJoinClubByIdx($idx)" for="{{availableClubs}}" style="margin:3px;">
+                <text class="btn-small-text-light">{{$item.icon}} {{$item.name}}</text>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 家 -->
+      <div if="{{currentLocation==='home'}}" style="flex-direction:column;">
+        <text class="heading" style="font-size:18px;">🏠 家</text>
+        <div class="btn btn-secondary" style="width:200px; margin-top:4px;" onclick="onRest">
+          <text class="btn-secondary-text">🛋️ 休息</text>
+        </div>
+        <div class="btn btn-primary" style="width:200px; margin-top:4px;" onclick="onSleep">
+          <text class="btn-primary-text">😴 睡觉</text>
+        </div>
+      </div>
+
+      <!-- 恋爱 -->
+      <div if="{{currentLocation==='romance'}}" style="flex-direction:column;">
+        <text class="heading" style="font-size:18px;">💕 恋爱</text>
+        <div if="{{romancePartner}}" style="margin-top:4px;">
+          <div class="card" style="width:420px;">
+            <text style="font-size:16px; font-weight:bold; color:#EC4899;">{{romancePartnerPortrait}} {{romancePartnerName}}</text>
+            <text style="font-size:12px; color:#94A3B8; margin-top:2px;">恋爱等级: {{romanceLevel}}</text>
+            <div class="btn btn-primary" style="width:160px; margin-top:6px;" onclick="onGoOnDate">
+              <text class="btn-primary-text">💕 约会</text>
+            </div>
+            <div class="btn btn-danger" style="width:160px; margin-top:4px;" onclick="onBreakUp">
+              <text class="btn-danger-text">💔 分手</text>
+            </div>
+          </div>
+        </div>
+        <div if="{{!romancePartner}}" style="margin-top:4px;">
+          <text class="small-text" style="margin-bottom:6px;">可以表白的对象：</text>
+          <div style="flex-direction:row; flex-wrap:wrap; justify-content:center;">
+            <div class="btn-small btn-small-secondary" onclick="onConfess($idx)" for="{{romanceableNPCs}}" style="margin:3px;">
+              <text class="btn-small-text-light">{{$item.portrait}} {{$item.name}}</text>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 课程表 -->
+      <div if="{{currentLocation==='schedule'}}" style="flex-direction:column;">
+        <text class="heading" style="font-size:18px;">📋 学业状况</text>
+        <div class="card" for="{{academicList}}" style="width:420px; margin:3px 0;">
+          <div class="row-between">
+            <text style="font-size:14px; font-weight:bold; color:#F1F5F9;">{{$item.icon}} {{$item.name}}</text>
+            <text style="font-size:13px; color:#3B82F6;">掌握度: {{$item.mastery}}%</text>
+          </div>
+          <div class="progress-bar" style="margin-top:4px;">
+            <div class="progress-fill progress-mastery" style="width:{{$item.mastery}}%;"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 成就 -->
+      <div if="{{currentLocation==='achievements'}}" style="flex-direction:column;">
+        <text class="heading" style="font-size:18px;">🏆 成就</text>
+        <text class="small-text" style="margin-bottom:6px;">成就点数: {{achievementPoints}}</text>
+        <div class="card" for="{{achievementList}}" style="width:420px; margin:3px 0;">
+          <text style="font-size:14px; color:#F1F5F9;">{{$item.emoji}} {{$item.name}}</text>
+          <text style="font-size:12px; color:#94A3B8;">{{$item.description}}</text>
+        </div>
+      </div>
+
+      <!-- 商店 -->
+      <div if="{{currentLocation==='shop'}}" style="flex-direction:column;">
+        <text class="heading" style="font-size:18px;">🛒 商店</text>
+        <text class="small-text" style="margin-bottom:6px;">成就点数: {{achievementPoints}}</text>
+        <div class="card" for="{{skinList}}" style="width:420px; margin:3px 0;">
+          <div class="row-between">
+            <text style="font-size:14px; color:#F1F5F9;">{{$item.emoji}} {{$item.name}}</text>
+            <text style="font-size:12px; color:#F59E0B;">{{$item.cost}}点</text>
+          </div>
+          <div class="btn-small btn-small-primary" style="margin-top:4px;" if="{{!$item.owned}}" onclick="onBuySkin($idx)">
+            <text class="btn-small-text">购买</text>
+          </div>
+          <text style="font-size:11px; color:#22C55E; margin-top:4px;" if="{{$item.owned}}">已拥有</text>
+        </div>
+      </div>
+    </div>
+
+    <!-- 通知区域 -->
+    <div style="padding:2px 16px; width:448px; max-height:80px; overflow:hidden;">
+      <div class="toast toast-{{notification.type}}" for="{{notifications}}" style="margin:1px 0;">
+        <text style="font-size:12px; color:#E2E8F0;">{{notification.text}}</text>
+      </div>
+    </div>
+
+    <!-- 事件对话框 -->
+    <div class="modal-overlay" if="{{currentEvent}}">
+      <div class="modal-content">
+        <text style="font-size:20px; font-weight:bold; color:#F59E0B; margin-bottom:8px;">{{currentEvent.title}}</text>
+        <text style="font-size:14px; color:#CBD5E1; line-height:22px; margin-bottom:12px;">{{currentEvent.description}}</text>
+        <div class="choice-btn" for="{{currentEvent.choices}}" onclick="onResolveChoice($idx)">
+          <text class="choice-btn-text">{{$item.text}}</text>
+        </div>
+      </div>
+    </div>
+
+    <!-- 底部操作栏 -->
+    <div class="bottom-bar">
+      <div class="btn-small btn-small-primary" onclick="onAdvanceSlot">
+        <text class="btn-small-text">⏩ 推进时间</text>
+      </div>
+      <div class="btn-small btn-small-secondary" onclick="onSaveGame">
+        <text class="btn-small-text-light">💾 保存</text>
+      </div>
+      <div class="btn-small btn-small-secondary" onclick="onCheckEnding">
+        <text class="btn-small-text-light">🎓 毕业</text>
+      </div>
+    </div>
+  </div>
+</template>
+
+<style>
+  @import '../common/style.css';
+</style>
+
+<script>
+  import router from '@system.router'
+  import gamestore from '../common/gamestore'
+  import gamedata from '../common/gamedata'
+
+  export default {
+    data: {
+      character: { name: '', year: 1, week: 1, day: 0, currentSlot: 'morning', energy: 100, maxEnergy: 100, stress: 0, happiness: 50, gpa: 0, stats: {}, identity: '', difficulty: 'normal' },
+      currentLocation: 'classroom',
+      dayName: '周一',
+      slotName: '上午',
+      identityName: '',
+      identityEmoji: '',
+      isNGPlus: false,
+      playthrough: 1,
+      energyPercent: 100,
+      subjectList: [],
+      classmateList: [],
+      allClubs: [],
+      joinedClubs: [],
+      availableClubs: [],
+      clubLimit: 2,
+      romancePartner: false,
+      romancePartnerName: '',
+      romancePartnerPortrait: '',
+      romanceLevel: '',
+      romanceableNPCs: [],
+      academicList: [],
+      achievementList: [],
+      achievementPoints: 0,
+      skinList: [],
+      notifications: [],
+      currentEvent: null,
+    },
+    onInit() {
+      this.refreshState()
+    },
+    onShow() {
+      this.refreshState()
+    },
+    refreshState() {
+      var state = gamestore.getState()
+      this.character = state.character
+      this.isNGPlus = state.ngplus.isNGPlus
+      this.playthrough = state.ngplus.playthrough
+      this.energyPercent = Math.round((state.character.energy / state.character.maxEnergy) * 100)
+      this.clubLimit = state.ngplus.clubLimit
+      this.achievementPoints = state.ngplus.achievementPoints
+
+      // 日期名称
+      this.dayName = gamedata.DAY_NAMES[state.character.day] || '周一'
+      this.slotName = gamedata.SLOT_NAMES[state.character.currentSlot] || '上午'
+
+      // 身份
+      var identityData = gamedata.identities.find(function(i) { return i.id === state.character.identity; })
+      if (identityData) {
+        this.identityName = identityData.name
+        this.identityEmoji = identityData.emoji
+      }
+
+      // 科目列表
+      this.subjectList = gamedata.subjects
+
+      // 同学列表
+      this.classmateList = gamedata.npcs.filter(function(n) { return n.type === 'classmate'; })
+
+      // 社团
+      this.allClubs = gamedata.clubs
+      var joinedIds = state.clubs.map(function(c) { return c.clubId; })
+      this.joinedClubs = gamedata.clubs.filter(function(c) { return joinedIds.indexOf(c.id) >= 0; }).map(function(c) {
+        var clubState = state.clubs.find(function(cs) { return cs.clubId === c.id; })
+        return { id: c.id, icon: c.icon, name: c.name, skill: clubState ? clubState.skill : 0 }
+      })
+      this.availableClubs = gamedata.clubs.filter(function(c) { return joinedIds.indexOf(c.id) < 0; })
+
+      // 恋爱
+      if (state.romanceState.partnerId) {
+        this.romancePartner = true
+        var partnerNpc = gamedata.npcs.find(function(n) { return n.id === state.romanceState.partnerId; })
+        if (partnerNpc) {
+          this.romancePartnerName = partnerNpc.name
+          this.romancePartnerPortrait = partnerNpc.portrait
+        }
+        var levels = ['暧昧', '初恋', '热恋', '深爱', '灵魂伴侣']
+        this.romanceLevel = levels[state.romanceState.datingLevel] || '暧昧'
+      } else {
+        this.romancePartner = false
+        // 可表白的NPC
+        this.romanceableNPCs = gamedata.npcs.filter(function(n) { return n.romanceable; })
+      }
+
+      // 学业
+      this.academicList = state.academics.map(function(a) {
+        var sub = gamedata.subjects.find(function(s) { return s.id === a.subjectId; })
+        return { name: sub ? sub.name : a.subjectId, icon: sub ? sub.icon : '📚', mastery: a.mastery }
+      })
+
+      // 成就
+      this.achievementList = gamedata.achievements.filter(function(a) {
+        return !a.hidden || state.ngplus.unlockedAchievements.indexOf(a.id) >= 0
+      }).map(function(a) {
+        var unlocked = state.ngplus.unlockedAchievements.indexOf(a.id) >= 0
+        return { emoji: unlocked ? a.emoji : '🔒', name: a.name, description: unlocked ? a.description : a.condition }
+      })
+
+      // 皮肤商店
+      var unlockedSkins = state.ngplus.unlockedSkins
+      this.skinList = gamedata.skins.map(function(s) {
+        return { id: s.id, emoji: s.emoji, name: s.name, cost: s.cost, owned: unlockedSkins.indexOf(s.id) >= 0 }
+      })
+
+      // 通知
+      this.notifications = state.notifications.slice(-5)
+
+      // 事件
+      this.currentEvent = state.currentEvent
+    },
+    onLocation(loc) {
+      this.currentLocation = loc
+    },
+    onAttendClass(idx) {
+      var subject = gamedata.subjects[idx]
+      if (subject) {
+        gamestore.attendClass(subject.id)
+        gamestore.advanceSlot()
+        this.refreshState()
+      }
+    },
+    onStudy(idx) {
+      var subject = gamedata.subjects[idx]
+      if (subject) {
+        gamestore.study(subject.id)
+        gamestore.advanceSlot()
+        this.refreshState()
+      }
+    },
+    onDoHomework(idx) {
+      var subject = gamedata.subjects[idx]
+      if (subject) {
+        gamestore.doHomework(subject.id)
+        gamestore.advanceSlot()
+        this.refreshState()
+      }
+    },
+    onSocialize(idx) {
+      var npc = this.classmateList[idx]
+      if (npc) {
+        gamestore.socialize(npc.id)
+        gamestore.advanceSlot()
+        this.refreshState()
+      }
+    },
+    onExercise() {
+      gamestore.exercise()
+      gamestore.advanceSlot()
+      this.refreshState()
+    },
+    onJoinClub(idx) {
+      var club = this.allClubs[idx]
+      if (club) {
+        gamestore.joinClub(club.id)
+        this.refreshState()
+      }
+    },
+    onJoinClubByIdx(idx) {
+      var club = this.availableClubs[idx]
+      if (club) {
+        gamestore.joinClub(club.id)
+        this.refreshState()
+      }
+    },
+    onAttendClub(idx) {
+      var club = this.joinedClubs[idx]
+      if (club) {
+        gamestore.attendClub(club.id)
+        gamestore.advanceSlot()
+        this.refreshState()
+      }
+    },
+    onLeaveClub(idx) {
+      var club = this.joinedClubs[idx]
+      if (club) {
+        gamestore.leaveClub(club.id)
+        this.refreshState()
+      }
+    },
+    onRest() {
+      gamestore.rest()
+      gamestore.advanceSlot()
+      this.refreshState()
+    },
+    onSleep() {
+      gamestore.sleep()
+      this.refreshState()
+      // 睡觉后检查事件
+      this.checkEventsAfterSleep()
+    },
+    onGoOnDate() {
+      var state = gamestore.getState()
+      if (state.romanceState.partnerId) {
+        gamestore.goOnDate(state.romanceState.partnerId)
+        gamestore.advanceSlot()
+        this.refreshState()
+      }
+    },
+    onConfess(idx) {
+      var npc = this.romanceableNPCs[idx]
+      if (npc) {
+        gamestore.confess(npc.id)
+        this.refreshState()
+      }
+    },
+    onBreakUp() {
+      gamestore.breakUp()
+      this.refreshState()
+    },
+    onAdvanceSlot() {
+      gamestore.advanceSlot()
+      // 检查事件
+      var hasEvent = gamestore.checkForEvents()
+      this.refreshState()
+
+      // 检查是否毕业
+      var state = gamestore.getState()
+      if (state.character.year > 3) {
+        this.goToEnding()
+      }
+    },
+    onSaveGame() {
+      gamestore.saveGame()
+      this.refreshState()
+    },
+    onCheckEnding() {
+      // 手动触发毕业检查
+      var state = gamestore.getState()
+      if (state.character.year >= 3) {
+        this.goToEnding()
+      } else {
+        gamestore.addNotification('还没到毕业的时候呢！', 'neutral')
+        this.refreshState()
+      }
+    },
+    onResolveChoice(idx) {
+      gamestore.resolveChoice(idx)
+      this.refreshState()
+    },
+    onBuySkin(idx) {
+      var skin = this.skinList[idx]
+      if (skin) {
+        gamestore.unlockSkin(skin.id)
+        this.refreshState()
+      }
+    },
+    checkEventsAfterSleep() {
+      gamestore.checkForEvents()
+      this.refreshState()
+    },
+    goToEnding() {
+      gamestore.triggerEnding()
+      router.push({ uri: '/ending' })
+    },
+  }
+</script>

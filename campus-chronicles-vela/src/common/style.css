@@ -1,0 +1,722 @@
+/* ═══════════════════════════════════════════════════════════
+   校园物语 - 全局样式
+   暖琥珀/深海军蓝配色方案
+   ═══════════════════════════════════════════════════════════ */
+
+/* ── 页面基础 ─────────────────────────────────────────── */
+.page {
+  background-color: #1E293B;
+  flex-direction: column;
+  align-items: center;
+  width: 480px;
+  min-height: 100%;
+}
+
+.page-scroll {
+  background-color: #1E293B;
+  flex-direction: column;
+  align-items: center;
+  width: 480px;
+}
+
+/* ── 文字样式 ─────────────────────────────────────────── */
+.title {
+  font-size: 36px;
+  font-weight: bold;
+  color: #F59E0B;
+  text-align: center;
+  margin-top: 20px;
+  margin-bottom: 8px;
+}
+
+.subtitle {
+  font-size: 16px;
+  color: #94A3B8;
+  text-align: center;
+  margin-bottom: 16px;
+}
+
+.heading {
+  font-size: 22px;
+  font-weight: bold;
+  color: #F1F5F9;
+  margin-top: 12px;
+  margin-bottom: 8px;
+}
+
+.body-text {
+  font-size: 14px;
+  color: #CBD5E1;
+  line-height: 22px;
+}
+
+.small-text {
+  font-size: 12px;
+  color: #94A3B8;
+}
+
+/* ── 按钮样式 ─────────────────────────────────────────── */
+.btn {
+  height: 44px;
+  border-radius: 8px;
+  justify-content: center;
+  align-items: center;
+  padding-left: 20px;
+  padding-right: 20px;
+  margin-top: 8px;
+  margin-bottom: 4px;
+}
+
+.btn-primary {
+  background-color: #F59E0B;
+  border-radius: 8px;
+}
+
+.btn-primary-text {
+  font-size: 16px;
+  font-weight: bold;
+  color: #1E293B;
+}
+
+.btn-secondary {
+  background-color: #334155;
+  border-radius: 8px;
+}
+
+.btn-secondary-text {
+  font-size: 16px;
+  font-weight: bold;
+  color: #E2E8F0;
+}
+
+.btn-danger {
+  background-color: #DC2626;
+  border-radius: 8px;
+}
+
+.btn-danger-text {
+  font-size: 16px;
+  font-weight: bold;
+  color: #FFFFFF;
+}
+
+.btn-small {
+  height: 32px;
+  padding-left: 12px;
+  padding-right: 12px;
+  border-radius: 6px;
+  justify-content: center;
+  align-items: center;
+  margin-top: 4px;
+  margin-bottom: 2px;
+}
+
+.btn-small-primary {
+  background-color: #F59E0B;
+  border-radius: 6px;
+}
+
+.btn-small-secondary {
+  background-color: #334155;
+  border-radius: 6px;
+}
+
+.btn-small-text {
+  font-size: 13px;
+  font-weight: bold;
+  color: #1E293B;
+}
+
+.btn-small-text-light {
+  font-size: 13px;
+  font-weight: bold;
+  color: #E2E8F0;
+}
+
+/* ── 卡片/面板样式 ────────────────────────────────────── */
+.card {
+  background-color: #334155;
+  border-radius: 12px;
+  padding: 16px;
+  margin: 6px 16px;
+  width: 440px;
+}
+
+.card-selected {
+  background-color: #475569;
+  border-width: 2px;
+  border-color: #F59E0B;
+  border-style: solid;
+  border-radius: 12px;
+  padding: 14px;
+  margin: 6px 16px;
+  width: 440px;
+}
+
+.card-title {
+  font-size: 16px;
+  font-weight: bold;
+  color: #F1F5F9;
+  margin-bottom: 4px;
+}
+
+.card-desc {
+  font-size: 13px;
+  color: #94A3B8;
+  line-height: 20px;
+}
+
+.panel {
+  background-color: #1E293B;
+  border-radius: 12px;
+  padding: 12px;
+  margin: 4px 16px;
+  width: 440px;
+  border-width: 1px;
+  border-color: #334155;
+  border-style: solid;
+}
+
+/* ── 进度条样式 ───────────────────────────────────────── */
+.progress-bar {
+  height: 8px;
+  background-color: #475569;
+  border-radius: 4px;
+  width: 100%;
+  overflow: hidden;
+}
+
+.progress-fill {
+  height: 8px;
+  border-radius: 4px;
+}
+
+.progress-energy {
+  background-color: #22C55E;
+}
+
+.progress-stress {
+  background-color: #EF4444;
+}
+
+.progress-happiness {
+  background-color: #F59E0B;
+}
+
+.progress-mastery {
+  background-color: #3B82F6;
+}
+
+.progress-romance {
+  background-color: #EC4899;
+}
+
+/* ── 颜色工具类 ───────────────────────────────────────── */
+.color-amber {
+  color: #F59E0B;
+}
+
+.color-blue {
+  color: #3B82F6;
+}
+
+.color-green {
+  color: #22C55E;
+}
+
+.color-red {
+  color: #EF4444;
+}
+
+.color-pink {
+  color: #EC4899;
+}
+
+.color-purple {
+  color: #A855F7;
+}
+
+.color-cyan {
+  color: #06B6D4;
+}
+
+.color-slate {
+  color: #94A3B8;
+}
+
+.color-white {
+  color: #F1F5F9;
+}
+
+.bg-amber {
+  background-color: #F59E0B;
+}
+
+.bg-blue {
+  background-color: #3B82F6;
+}
+
+.bg-green {
+  background-color: #22C55E;
+}
+
+.bg-red {
+  background-color: #EF4444;
+}
+
+.bg-pink {
+  background-color: #EC4899;
+}
+
+.bg-slate {
+  background-color: #334155;
+}
+
+.bg-dark {
+  background-color: #1E293B;
+}
+
+.bg-darker {
+  background-color: #0F172A;
+}
+
+/* ── 布局工具 ─────────────────────────────────────────── */
+.row {
+  flex-direction: row;
+  align-items: center;
+}
+
+.row-between {
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.row-center {
+  flex-direction: row;
+  justify-content: center;
+  align-items: center;
+}
+
+.col {
+  flex-direction: column;
+}
+
+.col-center {
+  flex-direction: column;
+  align-items: center;
+}
+
+.flex-1 {
+  flex: 1;
+}
+
+.flex-wrap {
+  flex-wrap: wrap;
+}
+
+.center {
+  justify-content: center;
+  align-items: center;
+}
+
+.mt-4 {
+  margin-top: 4px;
+}
+
+.mt-8 {
+  margin-top: 8px;
+}
+
+.mt-12 {
+  margin-top: 12px;
+}
+
+.mt-16 {
+  margin-top: 16px;
+}
+
+.mb-4 {
+  margin-bottom: 4px;
+}
+
+.mb-8 {
+  margin-bottom: 8px;
+}
+
+.ml-4 {
+  margin-left: 4px;
+}
+
+.mr-4 {
+  margin-right: 4px;
+}
+
+.mr-8 {
+  margin-right: 8px;
+}
+
+.p-8 {
+  padding: 8px;
+}
+
+.p-12 {
+  padding: 12px;
+}
+
+.p-16 {
+  padding: 16px;
+}
+
+.px-16 {
+  padding-left: 16px;
+  padding-right: 16px;
+}
+
+/* ── 徽章样式 ─────────────────────────────────────────── */
+.badge {
+  background-color: #F59E0B;
+  border-radius: 10px;
+  padding-left: 8px;
+  padding-right: 8px;
+  padding-top: 2px;
+  padding-bottom: 2px;
+  margin-left: 4px;
+}
+
+.badge-text {
+  font-size: 11px;
+  font-weight: bold;
+  color: #1E293B;
+}
+
+.badge-ng {
+  background-color: #A855F7;
+  border-radius: 10px;
+  padding-left: 8px;
+  padding-right: 8px;
+  padding-top: 2px;
+  padding-bottom: 2px;
+  margin-left: 4px;
+}
+
+.badge-ng-text {
+  font-size: 11px;
+  font-weight: bold;
+  color: #FFFFFF;
+}
+
+/* ── 输入框样式 ───────────────────────────────────────── */
+.input {
+  background-color: #475569;
+  border-radius: 8px;
+  height: 40px;
+  padding-left: 12px;
+  padding-right: 12px;
+  font-size: 15px;
+  color: #F1F5F9;
+  width: 400px;
+}
+
+/* ── 分割线 ───────────────────────────────────────────── */
+.divider {
+  height: 1px;
+  background-color: #475569;
+  margin-top: 8px;
+  margin-bottom: 8px;
+  width: 100%;
+}
+
+/* ── 通知样式 ─────────────────────────────────────────── */
+.toast {
+  background-color: #334155;
+  border-radius: 8px;
+  padding: 8px 16px;
+  margin: 2px 16px;
+}
+
+.toast-positive {
+  border-left-width: 3px;
+  border-left-color: #22C55E;
+  border-left-style: solid;
+}
+
+.toast-negative {
+  border-left-width: 3px;
+  border-left-color: #EF4444;
+  border-left-style: solid;
+}
+
+.toast-neutral {
+  border-left-width: 3px;
+  border-left-color: #94A3B8;
+  border-left-style: solid;
+}
+
+/* ── 地图按钮网格 ─────────────────────────────────────── */
+.map-btn {
+  width: 100px;
+  height: 72px;
+  background-color: #334155;
+  border-radius: 10px;
+  justify-content: center;
+  align-items: center;
+  margin: 4px;
+}
+
+.map-btn-active {
+  width: 100px;
+  height: 72px;
+  background-color: #475569;
+  border-width: 2px;
+  border-color: #F59E0B;
+  border-style: solid;
+  border-radius: 10px;
+  justify-content: center;
+  align-items: center;
+  margin: 4px;
+}
+
+.map-btn-icon {
+  font-size: 24px;
+  margin-bottom: 2px;
+}
+
+.map-btn-text {
+  font-size: 12px;
+  color: #E2E8F0;
+}
+
+/* ── 模态对话框 ───────────────────────────────────────── */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.7);
+  justify-content: center;
+  align-items: center;
+}
+
+.modal-content {
+  background-color: #1E293B;
+  border-radius: 16px;
+  padding: 20px;
+  width: 420px;
+  max-height: 500px;
+  border-width: 1px;
+  border-color: #475569;
+  border-style: solid;
+}
+
+/* ── 步骤指示器 ───────────────────────────────────────── */
+.step-indicator {
+  flex-direction: row;
+  justify-content: center;
+  align-items: center;
+  margin-top: 8px;
+  margin-bottom: 12px;
+}
+
+.step-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 5px;
+  background-color: #475569;
+  margin-left: 4px;
+  margin-right: 4px;
+}
+
+.step-dot-active {
+  width: 10px;
+  height: 10px;
+  border-radius: 5px;
+  background-color: #F59E0B;
+  margin-left: 4px;
+  margin-right: 4px;
+}
+
+/* ── 身份卡片 ─────────────────────────────────────────── */
+.identity-card {
+  background-color: #334155;
+  border-radius: 10px;
+  padding: 12px;
+  width: 200px;
+  margin: 4px;
+}
+
+.identity-card-selected {
+  background-color: #475569;
+  border-width: 2px;
+  border-color: #F59E0B;
+  border-style: solid;
+  border-radius: 10px;
+  padding: 10px;
+  width: 200px;
+  margin: 4px;
+}
+
+.identity-emoji {
+  font-size: 28px;
+  margin-bottom: 4px;
+}
+
+.identity-name {
+  font-size: 15px;
+  font-weight: bold;
+  color: #F1F5F9;
+  margin-bottom: 2px;
+}
+
+.identity-desc {
+  font-size: 12px;
+  color: #94A3B8;
+  line-height: 18px;
+}
+
+/* ── 属性分配行 ───────────────────────────────────────── */
+.stat-row {
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 0;
+  width: 420px;
+}
+
+.stat-name {
+  font-size: 14px;
+  color: #CBD5E1;
+  width: 80px;
+}
+
+.stat-value {
+  font-size: 16px;
+  font-weight: bold;
+  color: #F59E0B;
+  width: 40px;
+  text-align: center;
+}
+
+.stat-btn {
+  width: 32px;
+  height: 32px;
+  background-color: #475569;
+  border-radius: 6px;
+  justify-content: center;
+  align-items: center;
+}
+
+.stat-btn-text {
+  font-size: 18px;
+  font-weight: bold;
+  color: #F1F5F9;
+}
+
+/* ── 难度卡片 ─────────────────────────────────────────── */
+.difficulty-card {
+  background-color: #334155;
+  border-radius: 10px;
+  padding: 16px;
+  width: 420px;
+  margin: 6px 0;
+}
+
+.difficulty-card-selected {
+  background-color: #475569;
+  border-width: 2px;
+  border-color: #F59E0B;
+  border-style: solid;
+  border-radius: 10px;
+  padding: 14px;
+  width: 420px;
+  margin: 6px 0;
+}
+
+/* ── 顶部状态栏 ───────────────────────────────────────── */
+.top-bar {
+  background-color: #0F172A;
+  padding: 8px 16px;
+  width: 448px;
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.top-bar-text {
+  font-size: 12px;
+  color: #94A3B8;
+}
+
+.top-bar-value {
+  font-size: 12px;
+  font-weight: bold;
+  color: #F1F5F9;
+}
+
+/* ── 底部操作栏 ───────────────────────────────────────── */
+.bottom-bar {
+  background-color: #0F172A;
+  padding: 8px 16px;
+  width: 448px;
+  flex-direction: row;
+  justify-content: space-around;
+  align-items: center;
+}
+
+/* ── 事件选择按钮 ─────────────────────────────────────── */
+.choice-btn {
+  background-color: #334155;
+  border-radius: 8px;
+  padding: 12px 16px;
+  margin-top: 6px;
+  width: 380px;
+}
+
+.choice-btn-text {
+  font-size: 14px;
+  color: #E2E8F0;
+  line-height: 20px;
+}
+
+/* ── 结局页面 ─────────────────────────────────────────── */
+.ending-emoji {
+  font-size: 64px;
+  margin-top: 24px;
+  margin-bottom: 8px;
+}
+
+.ending-title {
+  font-size: 28px;
+  font-weight: bold;
+  color: #F59E0B;
+  text-align: center;
+  margin-bottom: 8px;
+}
+
+.ending-desc {
+  font-size: 15px;
+  color: #CBD5E1;
+  text-align: center;
+  line-height: 24px;
+  padding: 0 24px;
+  margin-bottom: 16px;
+}
+
+/* ── NG+ 横幅 ─────────────────────────────────────────── */
+.ngplus-banner {
+  background-color: #581C87;
+  border-radius: 8px;
+  padding: 8px 16px;
+  margin: 8px 16px;
+  width: 440px;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+}
+
+.ngplus-banner-text {
+  font-size: 14px;
+  font-weight: bold;
+  color: #E9D5FF;
+}

@@ -1,0 +1,156 @@
+<template>
+  <div class="page" style="justify-content:center; align-items:center;">
+    <!-- 结局表情 -->
+    <text class="ending-emoji">{{endingEmoji}}</text>
+
+    <!-- 结局标题 -->
+    <text class="ending-title">{{endingTitle}}</text>
+
+    <!-- 结局描述 -->
+    <text class="ending-desc">{{endingDesc}}</text>
+
+    <!-- 分割线 -->
+    <div class="divider" style="width:380px; margin:8px 0;"></div>
+
+    <!-- 属性总结 -->
+    <div style="width:400px; padding:0 20px;">
+      <text class="heading" style="font-size:16px; text-align:center;">属性总结</text>
+      <div class="stat-row" style="width:360px;" for="{{statSummary}}">
+        <text class="stat-name">{{$item.icon}} {{$item.name}}</text>
+        <text class="stat-value">{{$item.value}}</text>
+      </div>
+    </div>
+
+    <!-- 恋爱总结 -->
+    <div if="{{romanceSummary}}" style="width:400px; padding:0 20px; margin-top:8px;">
+      <text style="font-size:14px; color:#EC4899; text-align:center;">💕 {{romanceSummary}}</text>
+    </div>
+
+    <!-- 新解锁成就 -->
+    <div if="{{newAchievements.length>0}}" style="width:400px; padding:0 20px; margin-top:12px;">
+      <text class="heading" style="font-size:16px; text-align:center;">新解锁成就</text>
+      <div style="flex-direction:row; flex-wrap:wrap; justify-content:center;">
+        <text style="font-size:14px; color:#F59E0B; margin:2px 6px;" for="{{newAchievements}}">{{$item.emoji}} {{$item.name}}</text>
+      </div>
+    </div>
+
+    <!-- 继承属性预览 -->
+    <div if="{{isNGPlus}}" style="width:400px; padding:0 20px; margin-top:12px;">
+      <text class="heading" style="font-size:16px; text-align:center;">继承属性预览</text>
+      <text class="small-text" style="text-align:center;">继承率: {{inheritanceRate}}%</text>
+      <div class="stat-row" style="width:360px;" for="{{inheritedPreview}}">
+        <text class="stat-name">{{$item.icon}} {{$item.name}}</text>
+        <text class="stat-value" style="color:#A855F7;">+{{$item.value}}</text>
+      </div>
+    </div>
+
+    <!-- 操作按钮 -->
+    <div style="flex-direction:column; align-items:center; margin-top:20px; margin-bottom:30px;">
+      <div class="btn btn-primary" style="width:280px;" onclick="onNGPlus">
+        <text class="btn-primary-text">🔄 开始二周目</text>
+      </div>
+      <div class="btn btn-secondary" style="width:280px;" onclick="onRestart">
+        <text class="btn-secondary-text">🏠 重新开始</text>
+      </div>
+    </div>
+  </div>
+</template>
+
+<style>
+  @import '../common/style.css';
+</style>
+
+<script>
+  import router from '@system.router'
+  import gamestore from '../common/gamestore'
+  import gamedata from '../common/gamedata'
+
+  export default {
+    data: {
+      endingEmoji: '🎓',
+      endingTitle: '结局',
+      endingDesc: '',
+      statSummary: [],
+      romanceSummary: '',
+      newAchievements: [],
+      isNGPlus: false,
+      inheritanceRate: 50,
+      inheritedPreview: [],
+    },
+    onInit() {
+      this.loadEnding()
+    },
+    onShow() {
+      this.loadEnding()
+    },
+    loadEnding() {
+      var state = gamestore.getState()
+      var endingType = state.endingType || 'ending-average'
+
+      // 查找结局数据
+      var ending = gamedata.endings.find(function(e) { return e.id === endingType; })
+      if (ending) {
+        this.endingEmoji = ending.emoji
+        this.endingTitle = ending.title
+        this.endingDesc = ending.description
+      } else {
+        this.endingEmoji = '😊'
+        this.endingTitle = '平凡青春'
+        this.endingDesc = '没有惊天动地的成就，但你的高中生活充实而温暖。'
+      }
+
+      // 属性总结
+      var stats = state.character.stats
+      this.statSummary = [
+        { name: '智力', icon: '🧠', value: stats.intelligence },
+        { name: '魅力', icon: '💬', value: stats.charisma },
+        { name: '运动', icon: '💪', value: stats.athleticism },
+        { name: '创造力', icon: '🎨', value: stats.creativity },
+        { name: '勤奋', icon: '📚', value: stats.diligence },
+        { name: '运气', icon: '🍀', value: stats.luck },
+      ]
+
+      // 恋爱总结
+      if (state.romanceState.partnerId) {
+        var partner = gamedata.npcs.find(function(n) { return n.id === state.romanceState.partnerId; })
+        if (partner) {
+          this.romanceSummary = '与' + partner.name + '的恋爱关系'
+        }
+      } else {
+        this.romanceSummary = ''
+      }
+
+      // 新解锁成就
+      this.newAchievements = state.ngplus.unlockedAchievements.map(function(aid) {
+        var a = gamedata.achievements.find(function(ach) { return ach.id === aid; })
+        return a ? { emoji: a.emoji, name: a.name } : { emoji: '🏆', name: aid }
+      }).slice(-5)
+
+      // 继承属性预览
+      this.isNGPlus = state.ngplus.isNGPlus || state.ngplus.playthrough >= 1
+      var rate = gamedata.calculateInheritanceRate(state.ngplus.unlockedAchievements)
+      this.inheritanceRate = Math.round(rate * 100)
+
+      this.inheritedPreview = [
+        { name: '智力', icon: '🧠', value: Math.round(stats.intelligence * rate) },
+        { name: '魅力', icon: '💬', value: Math.round(stats.charisma * rate) },
+        { name: '运动', icon: '💪', value: Math.round(stats.athleticism * rate) },
+        { name: '创造力', icon: '🎨', value: Math.round(stats.creativity * rate) },
+        { name: '勤奋', icon: '📚', value: Math.round(stats.diligence * rate) },
+        { name: '运气', icon: '🍀', value: Math.round(stats.luck * rate) },
+      ]
+    },
+    onNGPlus() {
+      gamestore.startNGPlus()
+      router.replace({
+        uri: '/create'
+      })
+    },
+    onRestart() {
+      gamestore.resetFullGame()
+      router.replace({
+        uri: '/'
+      })
+    },
+  }
+</script>

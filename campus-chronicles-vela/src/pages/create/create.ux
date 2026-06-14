@@ -1,0 +1,239 @@
+<template>
+  <div class="page">
+    <!-- NG+ 横幅 -->
+    <div class="ngplus-banner" if="{{isNGPlus}}">
+      <text class="ngplus-banner-text">🔄 二周目 · 第{{playthrough}}次轮回</text>
+    </div>
+
+    <!-- 步骤指示器 -->
+    <div class="step-indicator">
+      <div class="step-dot-active" if="{{step===1}}"></div>
+      <div class="step-dot" if="{{step!==1}}"></div>
+      <div class="step-dot-active" if="{{step===2}}"></div>
+      <div class="step-dot" if="{{step!==2}}"></div>
+      <div class="step-dot-active" if="{{step===3}}"></div>
+      <div class="step-dot" if="{{step!==3}}"></div>
+    </div>
+
+    <!-- 步骤1: 名字 + 身份 -->
+    <div class="col-center" if="{{step===1}}" style="width:480px;">
+      <text class="heading">创建你的角色</text>
+
+      <!-- 名字输入 -->
+      <div style="margin-top:12px; margin-bottom:16px; width:420px;">
+        <text class="small-text" style="margin-bottom:4px;">姓名</text>
+        <input class="input" type="text" placeholder="输入你的名字" value="{{characterName}}" onchange="onNameChange" style="width:400px;" />
+      </div>
+
+      <!-- 身份选择 -->
+      <text class="small-text" style="margin-bottom:8px;">选择你的身份</text>
+      <div style="flex-direction:row; flex-wrap:wrap; justify-content:center; width:440px;">
+        <div class="identity-card" for="{{identities}}" onclick="onSelectIdentity($idx)">
+          <div class="identity-card-selected" if="{{$item.id===selectedIdentity}}">
+            <text class="identity-emoji">{{$item.emoji}}</text>
+            <text class="identity-name">{{$item.name}}</text>
+            <text class="identity-desc">{{$item.description}}</text>
+          </div>
+          <div if="{{$item.id!==selectedIdentity}}">
+            <text class="identity-emoji">{{$item.emoji}}</text>
+            <text class="identity-name">{{$item.name}}</text>
+            <text class="identity-desc">{{$item.description}}</text>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 步骤2: 属性分配 -->
+    <div class="col-center" if="{{step===2}}" style="width:480px;">
+      <text class="heading">分配属性点</text>
+      <text class="small-text" style="margin-bottom:8px;">剩余点数: {{bonusPoints}}</text>
+
+      <div style="flex-direction:column; align-items:center; width:440px;">
+        <div class="stat-row" for="{{statList}}">
+          <text class="stat-name">{{$item.icon}} {{$item.name}}</text>
+          <div class="stat-btn" onclick="onStatDown($idx)">
+            <text class="stat-btn-text">-</text>
+          </div>
+          <text class="stat-value">{{$item.value}}</text>
+          <div class="stat-btn" onclick="onStatUp($idx)">
+            <text class="stat-btn-text">+</text>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 步骤3: 难度选择 -->
+    <div class="col-center" if="{{step===3}}" style="width:480px;">
+      <text class="heading">选择难度</text>
+
+      <div style="flex-direction:column; align-items:center; width:440px;">
+        <div for="{{difficulties}}" onclick="onSelectDifficulty($idx)">
+          <div class="difficulty-card-selected" if="{{$item.id===selectedDifficulty}}">
+            <text style="font-size:18px; font-weight:bold; color:#F59E0B;">{{$item.emoji}} {{$item.label}}</text>
+            <text class="card-desc" style="margin-top:4px;">{{$item.description}}</text>
+            <text class="small-text" style="margin-top:4px;">初始精力: {{$item.startingEnergy}} | 最大精力: {{$item.maxEnergy}}</text>
+          </div>
+          <div class="difficulty-card" if="{{$item.id!==selectedDifficulty}}">
+            <text style="font-size:18px; font-weight:bold; color:#F1F5F9;">{{$item.emoji}} {{$item.label}}</text>
+            <text class="card-desc" style="margin-top:4px;">{{$item.description}}</text>
+            <text class="small-text" style="margin-top:4px;">初始精力: {{$item.startingEnergy}} | 最大精力: {{$item.maxEnergy}}</text>
+          </div>
+        </div>
+      </div>
+
+      <!-- NG+ 天赋选择 -->
+      <div if="{{isNGPlus}}" style="margin-top:12px; width:420px;">
+        <text class="heading" style="font-size:18px;">选择天赋</text>
+        <div style="flex-direction:row; flex-wrap:wrap; justify-content:center;">
+          <div class="card" style="width:130px; margin:4px;" for="{{availableTalents}}" onclick="onSelectTalent($idx)">
+            <div class="card-selected" style="width:130px; margin:0; padding:12px;" if="{{$item.id===selectedTalent}}">
+              <text style="font-size:20px;">{{$item.emoji}}</text>
+              <text style="font-size:13px; font-weight:bold; color:#F59E0B;">{{$item.name}}</text>
+              <text style="font-size:11px; color:#94A3B8;">{{$item.effect}}</text>
+            </div>
+            <div if="{{$item.id!==selectedTalent}}" style="padding:12px;">
+              <text style="font-size:20px;">{{$item.emoji}}</text>
+              <text style="font-size:13px; font-weight:bold; color:#F1F5F9;">{{$item.name}}</text>
+              <text style="font-size:11px; color:#94A3B8;">{{$item.effect}}</text>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 底部导航按钮 -->
+    <div style="flex-direction:row; justify-content:space-between; width:420px; margin-top:20px; margin-bottom:20px;">
+      <div class="btn btn-secondary" onclick="onPrev" if="{{step>1}}" style="width:180px;">
+        <text class="btn-secondary-text">上一步</text>
+      </div>
+      <div class="btn btn-primary" onclick="onNext" if="{{step<3}}" style="width:180px;">
+        <text class="btn-primary-text">下一步</text>
+      </div>
+      <div class="btn btn-primary" onclick="onStartGame" if="{{step===3}}" style="width:280px;">
+        <text class="btn-primary-text">开始游戏</text>
+      </div>
+    </div>
+  </div>
+</template>
+
+<style>
+  @import '../common/style.css';
+</style>
+
+<script>
+  import router from '@system.router'
+  import gamestore from '../common/gamestore'
+  import gamedata from '../common/gamedata'
+
+  export default {
+    data: {
+      step: 1,
+      characterName: '',
+      selectedIdentity: '',
+      selectedDifficulty: 'normal',
+      selectedTalent: '',
+      bonusPoints: 15,
+      isNGPlus: false,
+      playthrough: 1,
+      identities: [],
+      difficulties: [],
+      availableTalents: [],
+      statList: [],
+    },
+    onInit() {
+      this.identities = gamedata.identities
+      this.difficulties = gamedata.difficultyPresets
+
+      var state = gamestore.getState()
+      this.isNGPlus = state.ngplus.isNGPlus
+      this.playthrough = state.ngplus.playthrough
+
+      if (this.isNGPlus) {
+        this.availableTalents = gamedata.talents
+      }
+
+      // 初始化属性列表
+      this.statList = [
+        { key: 'intelligence', name: '智力', icon: '🧠', value: 5 },
+        { key: 'charisma', name: '魅力', icon: '💬', value: 5 },
+        { key: 'athleticism', name: '运动', icon: '💪', value: 5 },
+        { key: 'creativity', name: '创造力', icon: '🎨', value: 5 },
+        { key: 'diligence', name: '勤奋', icon: '📚', value: 5 },
+        { key: 'luck', name: '运气', icon: '🍀', value: 5 },
+      ]
+
+      // 如果是NG+，应用继承属性预览
+      if (state.ngplus.inheritedStats) {
+        var inherited = state.ngplus.inheritedStats
+        for (var i = 0; i < this.statList.length; i++) {
+          var key = this.statList[i].key
+          if (inherited[key]) {
+            this.statList[i].value = 5 + inherited[key]
+          }
+        }
+      }
+    },
+    onNameChange(e) {
+      this.characterName = e.value
+    },
+    onSelectIdentity(idx) {
+      this.selectedIdentity = this.identities[idx].id
+    },
+    onSelectDifficulty(idx) {
+      this.selectedDifficulty = this.difficulties[idx].id
+    },
+    onSelectTalent(idx) {
+      this.selectedTalent = this.availableTalents[idx].id
+    },
+    onStatUp(idx) {
+      if (this.bonusPoints <= 0) return
+      if (this.statList[idx].value >= 20) return
+      this.statList[idx].value++
+      this.bonusPoints--
+    },
+    onStatDown(idx) {
+      var minVal = 1
+      if (this.statList[idx].value <= minVal) return
+      this.statList[idx].value--
+      this.bonusPoints++
+    },
+    onPrev() {
+      if (this.step > 1) this.step--
+    },
+    onNext() {
+      if (this.step < 3) this.step++
+    },
+    onStartGame() {
+      // 验证
+      if (!this.characterName) {
+        this.characterName = '小明'
+      }
+      if (!this.selectedIdentity) {
+        this.selectedIdentity = 'scholar'
+      }
+
+      // 设置角色数据
+      gamestore.setCharacterName(this.characterName)
+      gamestore.setIdentity(this.selectedIdentity)
+      gamestore.setDifficulty(this.selectedDifficulty)
+
+      // 设置属性
+      for (var i = 0; i < this.statList.length; i++) {
+        gamestore.allocateStat(this.statList[i].key, this.statList[i].value)
+      }
+
+      // NG+ 天赋
+      if (this.isNGPlus && this.selectedTalent) {
+        gamestore.selectTalent(this.selectedTalent)
+        gamestore.setFlag('talent-selected')
+      }
+
+      // 开始游戏
+      gamestore.startGame()
+
+      router.push({
+        uri: '/game'
+      })
+    },
+  }
+</script>

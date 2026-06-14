@@ -1,0 +1,9 @@
+{
+  "name": "campus-chronicles-vela",
+  "version": "1.0.0",
+  "description": "校园物语 - 高中生活模拟游戏",
+  "scripts": {
+    "build": "hap build",
+    "release": "hap release"
+  }
+}
