@@ -5,6 +5,7 @@ import { useGameStore } from '@/store/gameStore';
 import { subjects } from '@/data/subjects';
 import { clubs } from '@/data/clubs';
 import { npcs } from '@/data/npcs';
+import { identities } from '@/data/identities';
 import { events } from '@/data/events';
 import EventDialog from '@/components/EventDialog';
 import CharacterPanel from '@/components/CharacterPanel';
@@ -15,8 +16,9 @@ import type { GameEvent } from '@/engine/types';
 
 const YEAR_LABELS = ['高一', '高二', '高三', '高三下'];
 const DAY_NAMES = ['周一', '周二', '周三', '周四', '周五', '周六', '周日'];
+const DATING_LABELS = ['暗恋', '暧昧', '交往中', '稳定交往', '热恋', '灵魂伴侣'];
 
-type LocationKey = 'classroom' | 'library' | 'cafeteria' | 'gym' | 'club' | 'home' | 'schedule' | 'profile';
+type LocationKey = 'classroom' | 'library' | 'cafeteria' | 'gym' | 'club' | 'home' | 'schedule' | 'profile' | 'romance';
 
 const LOCATIONS: { key: LocationKey; icon: string; name: string; desc: string }[] = [
   { key: 'classroom', icon: '🏫', name: '教室', desc: '上课学习' },
@@ -24,7 +26,8 @@ const LOCATIONS: { key: LocationKey; icon: string; name: string; desc: string }[
   { key: 'cafeteria', icon: '🍽️', name: '食堂', desc: '与同学社交' },
   { key: 'gym', icon: '⚽', name: '体育馆', desc: '锻炼和体育课' },
   { key: 'club', icon: '🎭', name: '社团活动室', desc: '课外活动' },
-  { key: 'home', icon: '🏠', name: '家', desc: '休息和恢复' },
+  { key: 'home', icon: '🏠', name: '家', desc: '休息、睡觉和恢复' },
+  { key: 'romance', icon: '💕', name: '恋爱', desc: '表白、约会' },
   { key: 'schedule', icon: '📋', name: '课程表', desc: '规划你的一周' },
   { key: 'profile', icon: '👤', name: '个人资料', desc: '查看你的属性' },
 ];
@@ -94,7 +97,7 @@ function ClassroomPanel() {
   return (
     <div className="space-y-2">
       <h3 className="text-sm font-bold text-slate-800">上课</h3>
-      <p className="text-xs text-slate-600">每节课消耗15精力。</p>
+      <p className="text-xs text-slate-600">每节课消耗15精力，增加掌握度</p>
       <div className="grid grid-cols-2 gap-1.5">
         {subjects.map((sub) => (
           <button
@@ -150,14 +153,16 @@ function CafeteriaPanel() {
   const socialize = useGameStore((s) => s.socialize);
   const energy = useGameStore((s) => s.character.energy);
   const relationships = useGameStore((s) => s.relationships);
+  const romanceState = useGameStore((s) => s.romanceState);
   const classmates = npcs.filter((n) => n.type === 'classmate');
   return (
     <div className="space-y-2">
       <h3 className="text-sm font-bold text-slate-800">社交</h3>
-      <p className="text-xs text-slate-600">聊天消耗10精力，减少压力。</p>
+      <p className="text-xs text-slate-600">聊天消耗10精力，减少压力</p>
       <div className="grid grid-cols-2 gap-1.5">
         {classmates.map((npc) => {
           const rel = relationships.find((r) => r.npcId === npc.id);
+          const isPartner = romanceState.partnerId === npc.id;
           return (
             <button
               key={npc.id}
@@ -167,6 +172,7 @@ function CafeteriaPanel() {
             >
               <span>{npc.portrait}</span>
               <span className="truncate">{npc.name.split(' ')[0]}</span>
+              {isPartner && <span className="text-[9px] text-pink-500">❤️</span>}
               {rel && <span className="text-[9px] text-slate-400 ml-auto">{rel.tier}</span>}
             </button>
           );
@@ -177,20 +183,18 @@ function CafeteriaPanel() {
 }
 
 function GymPanel() {
+  const exercise = useGameStore((s) => s.exercise);
   const attendClass = useGameStore((s) => s.attendClass);
-  const updateStats = useGameStore((s) => s.updateStats);
-  const updateEnergy = useGameStore((s) => s.updateEnergy);
-  const updateStress = useGameStore((s) => s.updateStress);
   const energy = useGameStore((s) => s.character.energy);
   return (
     <div className="space-y-2">
       <h3 className="text-sm font-bold text-slate-800">体育馆</h3>
       <button
         disabled={energy < 15}
-        onClick={() => { updateStats({ athleticism: 2 }); updateEnergy(-15); updateStress(-5); }}
+        onClick={() => exercise()}
         className="w-full rounded-lg bg-red-100 px-3 py-2 text-xs font-medium text-red-800 border border-red-300 hover:bg-red-200 disabled:opacity-40"
       >
-        锻炼 (+运动, 15⚡)
+        锻炼 (+运动能力, 15⚡)
       </button>
       <button
         disabled={energy < 15}
@@ -252,9 +256,11 @@ function ClubPanel() {
 
 function HomePanel() {
   const rest = useGameStore((s) => s.rest);
+  const sleep = useGameStore((s) => s.sleep);
   const doHomework = useGameStore((s) => s.doHomework);
   const academics = useGameStore((s) => s.academics);
   const energy = useGameStore((s) => s.character.energy);
+  const currentSlot = useGameStore((s) => s.character.currentSlot);
   const pendingHw = academics.filter((a) => !a.homeworkDone);
   return (
     <div className="space-y-2">
@@ -265,6 +271,15 @@ function HomePanel() {
       >
         休息 (+40⚡, -15压力)
       </button>
+      <button
+        onClick={sleep}
+        className="w-full rounded-lg bg-indigo-100 px-3 py-2 text-xs font-medium text-indigo-800 border border-indigo-300 hover:bg-indigo-200"
+      >
+        🛏️ 睡觉 (精力全满, -20压力, 推进到次日早晨)
+      </button>
+      {currentSlot === 'evening' && (
+        <p className="text-[10px] text-indigo-500">💡 晚上了，睡觉可以恢复更多精力！</p>
+      )}
       {pendingHw.length > 0 && (
         <div className="space-y-1">
           <p className="text-xs text-slate-600">待完成的作业：</p>
@@ -287,6 +302,127 @@ function HomePanel() {
   );
 }
 
+function RomancePanel() {
+  const romanceState = useGameStore((s) => s.romanceState);
+  const relationships = useGameStore((s) => s.relationships);
+  const goOnDate = useGameStore((s) => s.goOnDate);
+  const confess = useGameStore((s) => s.confess);
+  const breakUp = useGameStore((s) => s.breakUp);
+  const energy = useGameStore((s) => s.character.energy);
+  const classmates = npcs.filter((n) => n.type === 'classmate' && n.romanceable);
+
+  const partner = romanceState.partnerId
+    ? { npc: npcs.find((n) => n.id === romanceState.partnerId), rel: relationships.find((r) => r.npcId === romanceState.partnerId) }
+    : null;
+
+  return (
+    <div className="space-y-3">
+      <h3 className="text-sm font-bold text-slate-800">💕 恋爱</h3>
+
+      {partner?.npc && partner.rel ? (
+        <div className="bg-pink-50 rounded-lg p-3 border border-pink-200">
+          <div className="flex items-center gap-2 mb-2">
+            <span className="text-2xl">{partner.npc.portrait}</span>
+            <div>
+              <p className="text-sm font-bold text-pink-800">{partner.npc.name}</p>
+              <p className="text-[10px] text-pink-600">
+                {DATING_LABELS[Math.min(romanceState.datingLevel, 5)]} · 浪漫度 {partner.rel.romance}
+              </p>
+            </div>
+          </div>
+          <div className="flex gap-2">
+            <button
+              disabled={energy < 20}
+              onClick={() => goOnDate(romanceState.partnerId!)}
+              className="flex-1 rounded-lg bg-pink-200 px-2 py-1.5 text-xs font-medium text-pink-800 hover:bg-pink-300 disabled:opacity-40"
+            >
+              约会 (20⚡)
+            </button>
+            <button
+              onClick={breakUp}
+              className="rounded-lg bg-gray-200 px-2 py-1.5 text-xs font-medium text-gray-600 hover:bg-gray-300"
+            >
+              分手
+            </button>
+          </div>
+          <p className="text-[10px] text-pink-400 mt-1">已约会 {romanceState.datesCompleted} 次</p>
+        </div>
+      ) : (
+        <p className="text-xs text-slate-500">你目前还是单身。与同学建立足够的信任和浪漫度后可以表白！</p>
+      )}
+
+      <h4 className="text-xs font-semibold text-slate-700">可互动的同学</h4>
+      <div className="space-y-1.5">
+        {classmates.map((npc) => {
+          if (romanceState.partnerId === npc.id) return null;
+          const rel = relationships.find((r) => r.npcId === npc.id);
+          const trust = rel?.trust ?? 0;
+          const romance = rel?.romance ?? 0;
+          const canConfess = trust >= 50 && romance >= 30 && !romanceState.partnerId;
+          return (
+            <div key={npc.id} className="flex items-center gap-2 bg-amber-50 rounded-lg p-2">
+              <span className="text-lg">{npc.portrait}</span>
+              <div className="flex-1 min-w-0">
+                <p className="text-xs font-medium text-slate-800 truncate">{npc.name}</p>
+                <p className="text-[10px] text-slate-500">信任 {trust} · 浪漫 {romance}</p>
+              </div>
+              {canConfess && (
+                <button
+                  onClick={() => confess(npc.id)}
+                  className="rounded bg-pink-200 px-2 py-1 text-[10px] font-medium text-pink-800 hover:bg-pink-300"
+                >
+                  💕 表白
+                </button>
+              )}
+              {!canConfess && !romanceState.partnerId && (
+                <span className="text-[9px] text-slate-400">需信任≥50,浪漫≥30</span>
+              )}
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+// ── Notification Toast ─────────────────────────────────────────────────────
+
+function NotificationToasts() {
+  const notifications = useGameStore((s) => s.notifications);
+  const removeNotification = useGameStore((s) => s.removeNotification);
+
+  useEffect(() => {
+    if (notifications.length > 0) {
+      const timer = setTimeout(() => {
+        removeNotification(notifications[0].id);
+      }, 2500);
+      return () => clearTimeout(timer);
+    }
+  }, [notifications, removeNotification]);
+
+  return (
+    <div className="fixed top-14 right-4 z-30 flex flex-col gap-1.5 max-w-xs">
+      <AnimatePresence>
+        {notifications.slice(-5).map((n) => (
+          <motion.div
+            key={n.id}
+            initial={{ opacity: 0, x: 60 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: 60 }}
+            className={`px-3 py-2 rounded-lg shadow-lg text-xs font-medium ${
+              n.type === 'positive' ? 'bg-emerald-500 text-white' :
+              n.type === 'negative' ? 'bg-red-500 text-white' :
+              'bg-amber-500 text-white'
+            }`}
+          >
+            {n.text}
+          </motion.div>
+        ))}
+      </AnimatePresence>
+    </div>
+  );
+}
+
 // ── Main GameHub Page ──────────────────────────────────────────────────────
 
 export default function GameHub() {
@@ -294,17 +430,16 @@ export default function GameHub() {
   const character = useGameStore((s) => s.character);
   const currentEvent = useGameStore((s) => s.currentEvent);
   const pendingEvents = useGameStore((s) => s.pendingEvents);
-  const eventLog = useGameStore((s) => s.eventLog);
-  const flags = useGameStore((s) => s.flags);
-  const relationships = useGameStore((s) => s.relationships);
   const advanceSlot = useGameStore((s) => s.advanceSlot);
   const saveGame = useGameStore((s) => s.saveGame);
   const setCurrentEvent = useGameStore((s) => s.setCurrentEvent);
+  const addNotification = useGameStore((s) => s.addNotification);
 
   const [activeLocation, setActiveLocation] = useState<LocationKey | null>(null);
   const [showProfile, setShowProfile] = useState(false);
   const [showSchedule, setShowSchedule] = useState(false);
-  const [notification, setNotification] = useState<string | null>(null);
+
+  const identityData = identities.find((i) => i.id === character.identity);
 
   // Check for ending condition
   useEffect(() => {
@@ -320,14 +455,6 @@ export default function GameHub() {
     }
   }, [currentEvent, pendingEvents, setCurrentEvent]);
 
-  // Show notifications
-  useEffect(() => {
-    if (notification) {
-      const timer = setTimeout(() => setNotification(null), 2000);
-      return () => clearTimeout(timer);
-    }
-  }, [notification]);
-
   const handleAdvanceTime = useCallback(() => {
     advanceSlot();
 
@@ -336,11 +463,10 @@ export default function GameHub() {
     const newEvents = checkDataEvents(state);
 
     if (newEvents.length > 0) {
-      // Add to pending events
       const store = useGameStore.getState();
       const updatedPending = [...store.pendingEvents, ...newEvents];
       useGameStore.setState({ pendingEvents: updatedPending });
-      setNotification(`新事件：${newEvents[0].title}！`);
+      addNotification(`新事件：${newEvents[0].title}！`, 'neutral');
     }
 
     // Auto-save every 5 time slots
@@ -348,7 +474,7 @@ export default function GameHub() {
       ['morning', 'afternoon', 'evening'].indexOf(state.character.currentSlot)) % 5 === 0) {
       saveGame();
     }
-  }, [advanceSlot, saveGame]);
+  }, [advanceSlot, saveGame, addNotification]);
 
   const handleLocationClick = (key: LocationKey) => {
     if (key === 'schedule') { setShowSchedule(true); return; }
@@ -369,6 +495,11 @@ export default function GameHub() {
           <span className="text-amber-300">第{character.week}周</span>
           <span className="text-amber-200">{dayName}</span>
           <span className="bg-amber-700 rounded-full px-2.5 py-0.5 text-xs font-semibold">{slotLabel}</span>
+          {identityData && (
+            <span className="bg-slate-700 rounded-full px-2 py-0.5 text-[10px]">
+              {identityData.emoji} {identityData.name}
+            </span>
+          )}
         </div>
         <div className="flex items-center gap-3 text-xs">
           <MiniMeter label="⚡" value={character.energy} max={character.maxEnergy} barColor="bg-emerald-400" />
@@ -377,41 +508,37 @@ export default function GameHub() {
         </div>
       </header>
 
-      {/* ── Notification ────────────────────────────────────── */}
-      <AnimatePresence>
-        {notification && (
-          <motion.div
-            initial={{ opacity: 0, y: -20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -20 }}
-            className="fixed top-16 left-1/2 -translate-x-1/2 z-30 bg-amber-500 text-white px-4 py-2 rounded-lg shadow-lg text-sm font-semibold"
-          >
-            {notification}
-          </motion.div>
-        )}
-      </AnimatePresence>
+      {/* ── Notification Toasts ─────────────────────────────── */}
+      <NotificationToasts />
 
       {/* ── Campus Map ──────────────────────────────────────── */}
       <main className="flex-1 p-4 overflow-y-auto">
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 max-w-2xl mx-auto">
+        <div className="grid grid-cols-3 sm:grid-cols-3 gap-2.5 max-w-2xl mx-auto">
           {LOCATIONS.map((loc) => (
             <motion.button
               key={loc.key}
               whileHover={{ scale: 1.04 }}
               whileTap={{ scale: 0.97 }}
               onClick={() => handleLocationClick(loc.key)}
-              className={`rounded-xl border-2 p-4 text-center transition-colors ${
+              className={`rounded-xl border-2 p-3 text-center transition-colors ${
                 activeLocation === loc.key
                   ? 'bg-amber-200 border-amber-500 shadow-md'
                   : 'bg-white border-amber-200 hover:bg-amber-50 hover:border-amber-300'
               }`}
             >
-              <div className="text-3xl mb-1">{loc.icon}</div>
-              <div className="text-sm font-bold text-slate-900 font-display">{loc.name}</div>
-              <div className="text-[10px] text-slate-500">{loc.desc}</div>
+              <div className="text-2xl mb-0.5">{loc.icon}</div>
+              <div className="text-xs font-bold text-slate-900 font-display">{loc.name}</div>
+              <div className="text-[9px] text-slate-500">{loc.desc}</div>
             </motion.button>
           ))}
         </div>
+
+        {/* ── Identity Mood Hint ─────────────────────────────── */}
+        {identityData && activeLocation && (
+          <div className="mt-3 max-w-2xl mx-auto">
+            <IdentityMoodHint identity={identityData} location={activeLocation} />
+          </div>
+        )}
 
         {/* ── Location Action Panel ─────────────────────────── */}
         <AnimatePresence>
@@ -421,7 +548,7 @@ export default function GameHub() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: 20 }}
-              className="mt-4 max-w-2xl mx-auto rounded-xl bg-white/90 border border-amber-200 p-4 shadow-lg backdrop-blur-sm"
+              className="mt-3 max-w-2xl mx-auto rounded-xl bg-white/90 border border-amber-200 p-4 shadow-lg backdrop-blur-sm"
             >
               <div className="flex justify-between items-center mb-3">
                 <h2 className="text-base font-bold text-slate-900 font-display">
@@ -441,6 +568,7 @@ export default function GameHub() {
               {activeLocation === 'gym' && <GymPanel />}
               {activeLocation === 'club' && <ClubPanel />}
               {activeLocation === 'home' && <HomePanel />}
+              {activeLocation === 'romance' && <RomancePanel />}
             </motion.div>
           )}
         </AnimatePresence>
@@ -457,7 +585,7 @@ export default function GameHub() {
           推进时间
         </motion.button>
         <button
-          onClick={() => { saveGame(); setNotification('游戏已保存！'); }}
+          onClick={() => { saveGame(); addNotification('游戏已保存！', 'neutral'); }}
           className="rounded-xl bg-amber-700 hover:bg-amber-600 text-amber-50 font-medium px-4 py-2.5 text-sm transition-colors"
         >
           保存
@@ -468,6 +596,41 @@ export default function GameHub() {
       {currentEvent && <EventDialog />}
       <CharacterPanel open={showProfile} onClose={() => setShowProfile(false)} />
       <SchedulePlanner open={showSchedule} onClose={() => setShowSchedule(false)} />
+    </div>
+  );
+}
+
+// ── Identity Mood Hint ─────────────────────────────────────────────────────
+
+function IdentityMoodHint({ identity, location }: { identity: typeof identities[0]; location: string }) {
+  // Map location to activity key
+  const activityMap: Record<string, string[]> = {
+    classroom: ['class'],
+    library: ['study', 'homework'],
+    cafeteria: ['socialize'],
+    gym: ['exercise', 'gym'],
+    club: ['club'],
+    home: ['rest'],
+  };
+  const activities = activityMap[location] ?? [];
+
+  const triggers = identity.moodTriggers.filter((t) => activities.includes(t.activity));
+  const drains = identity.moodDrains.filter((d) => activities.includes(d.activity));
+
+  if (triggers.length === 0 && drains.length === 0) return null;
+
+  return (
+    <div className="flex flex-wrap gap-1.5">
+      {triggers.map((t, i) => (
+        <span key={`t${i}`} className="inline-flex items-center gap-1 rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-medium text-emerald-700 border border-emerald-200">
+          😊 +{t.happinessGain} {t.description}
+        </span>
+      ))}
+      {drains.map((d, i) => (
+        <span key={`d${i}`} className="inline-flex items-center gap-1 rounded-full bg-red-100 px-2 py-0.5 text-[10px] font-medium text-red-700 border border-red-200">
+          😔 -{d.happinessLoss} {d.description}
+        </span>
+      ))}
     </div>
   );
 }

@@ -4,15 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Brain, MessageCircle, Dumbbell, Palette, Target, Clover, ChevronLeft, ChevronRight, Play } from 'lucide-react';
 import { useGameStore } from '@/store/gameStore';
 import { difficultyPresets } from '@/data/difficulty';
-
-const AVATARS = [
-  { emoji: '🧑‍🎓', label: '学霸' },
-  { emoji: '🎨', label: '艺术家' },
-  { emoji: '🏃', label: '运动员' },
-  { emoji: '💡', label: '创新者' },
-  { emoji: '🎭', label: '表演者' },
-  { emoji: '📚', label: '书虫' },
-];
+import { identities } from '@/data/identities';
 
 const STAT_CONFIG = [
   { key: 'intelligence', label: '智力', icon: Brain, color: 'text-blue-500' },
@@ -28,7 +20,12 @@ const BONUS_POINTS = 15;
 export default function CharacterCreation() {
   const [step, setStep] = useState(0);
   const navigate = useNavigate();
-  const { character, setCharacterName, setCharacterAppearance, allocateStat, setDifficulty, startGame } = useGameStore();
+  const { character, setCharacterName, setIdentity, allocateStat, setDifficulty, startGame } = useGameStore();
+
+  const selectedIdentity = useMemo(
+    () => identities.find((i) => i.id === character.identity),
+    [character.identity],
+  );
 
   const usedPoints = useMemo(() => {
     const s = character.stats;
@@ -37,7 +34,7 @@ export default function CharacterCreation() {
 
   const remaining = BONUS_POINTS - usedPoints;
 
-  const canNext = step === 0 ? character.name.trim().length > 0 : step === 1 ? remaining >= 0 : !!character.difficulty;
+  const canNext = step === 0 ? character.name.trim().length > 0 && !!character.identity : step === 1 ? remaining >= 0 : !!character.difficulty;
 
   const handleNext = () => {
     if (step < 2) setStep(step + 1);
@@ -61,6 +58,15 @@ export default function CharacterCreation() {
     }).join(' ');
   }, [character]);
 
+  const formatStatBonuses = (bonuses: Record<string, number>) => {
+    return Object.entries(bonuses)
+      .map(([key, val]) => {
+        const cfg = STAT_CONFIG.find((s) => s.key === key);
+        return `${cfg?.label ?? key}+${val}`;
+      })
+      .join(', ');
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-amber-50 to-orange-50 flex flex-col items-center p-4">
       {/* Progress dots */}
@@ -82,16 +88,54 @@ export default function CharacterCreation() {
                 <p className="text-xs text-gray-400 mt-1">{character.name.length}/20</p>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-600 mb-2">外貌</label>
+                <label className="block text-sm font-medium text-gray-600 mb-2">身份</label>
                 <div className="grid grid-cols-3 gap-3">
-                  {AVATARS.map((a) => (
-                    <button key={a.label} onClick={() => setCharacterAppearance(a.label)} className={`flex flex-col items-center p-3 rounded-xl border-2 transition-all ${character.appearance === a.label ? 'border-orange-500 bg-orange-50' : 'border-gray-200 hover:border-orange-300'}`}>
-                      <span className="text-3xl">{a.emoji}</span>
-                      <span className="text-xs mt-1 text-gray-600">{a.label}</span>
+                  {identities.map((identity) => (
+                    <button
+                      key={identity.id}
+                      onClick={() => setIdentity(identity.id)}
+                      className={`flex flex-col items-center p-3 rounded-xl border-2 transition-all ${character.identity === identity.id ? 'border-orange-500 bg-orange-50' : 'border-gray-200 hover:border-orange-300'}`}
+                    >
+                      <span className="text-3xl">{identity.emoji}</span>
+                      <span className="text-xs mt-1 text-gray-700 font-medium">{identity.name}</span>
+                      <span className="text-[10px] mt-0.5 text-gray-400 text-center leading-tight">{identity.description}</span>
                     </button>
                   ))}
                 </div>
               </div>
+              {/* Identity preview */}
+              {selectedIdentity && (
+                <div className="bg-orange-50 rounded-xl p-4 space-y-2 border border-orange-200">
+                  <div className="flex items-center gap-2">
+                    <span className="text-2xl">{selectedIdentity.emoji}</span>
+                    <span className="font-bold text-gray-800">{selectedIdentity.name}</span>
+                  </div>
+                  <div>
+                    <p className="text-xs font-medium text-gray-500 mb-1">属性加成</p>
+                    <p className="text-sm text-orange-700">{formatStatBonuses(selectedIdentity.statBonuses)}</p>
+                  </div>
+                  {selectedIdentity.moodTriggers.length > 0 && (
+                    <div>
+                      <p className="text-xs font-medium text-gray-500 mb-1">心情触发</p>
+                      <div className="flex flex-wrap gap-1">
+                        {selectedIdentity.moodTriggers.map((t, i) => (
+                          <span key={i} className="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full">{t.description}</span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                  {selectedIdentity.moodDrains.length > 0 && (
+                    <div>
+                      <p className="text-xs font-medium text-gray-500 mb-1">心情消耗</p>
+                      <div className="flex flex-wrap gap-1">
+                        {selectedIdentity.moodDrains.map((d, i) => (
+                          <span key={i} className="text-xs bg-red-100 text-red-600 px-2 py-0.5 rounded-full">{d.description}</span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
           )}
 
@@ -102,15 +146,24 @@ export default function CharacterCreation() {
                 <h2 className="text-xl font-bold text-gray-800">属性与特质</h2>
                 <span className={`text-sm font-semibold px-2 py-1 rounded-full ${remaining < 0 ? 'bg-red-100 text-red-600' : 'bg-orange-100 text-orange-700'}`}>{remaining} 点数剩余</span>
               </div>
+              {selectedIdentity && (
+                <div className="text-xs text-orange-600 bg-orange-50 rounded-lg px-3 py-2">
+                  身份「{selectedIdentity.name}」加成：{formatStatBonuses(selectedIdentity.statBonuses)}
+                </div>
+              )}
               <div className="space-y-3">
-                {STAT_CONFIG.map(({ key, label, icon: Icon, color }) => (
-                  <div key={key} className="flex items-center gap-3">
-                    <Icon className={`w-5 h-5 ${color} shrink-0`} />
-                    <span className="w-24 text-sm text-gray-700">{label}</span>
-                    <input type="range" min={1} max={20} value={character.stats[key]} onChange={(e) => handleSlider(key, +e.target.value)} className="flex-1 accent-orange-500" />
-                    <span className="w-6 text-center text-sm font-mono text-gray-800">{character.stats[key]}</span>
-                  </div>
-                ))}
+                {STAT_CONFIG.map(({ key, label, icon: Icon, color }) => {
+                  const bonus = selectedIdentity?.statBonuses[key] ?? 0;
+                  return (
+                    <div key={key} className="flex items-center gap-3">
+                      <Icon className={`w-5 h-5 ${color} shrink-0`} />
+                      <span className="w-24 text-sm text-gray-700">{label}</span>
+                      <input type="range" min={1} max={20} value={character.stats[key]} onChange={(e) => handleSlider(key, +e.target.value)} className="flex-1 accent-orange-500" />
+                      <span className="w-6 text-center text-sm font-mono text-gray-800">{character.stats[key]}</span>
+                      {bonus > 0 && <span className="text-xs font-medium text-orange-500">+{bonus}</span>}
+                    </div>
+                  );
+                })}
               </div>
               {/* Simple radar chart */}
               <div className="flex justify-center">

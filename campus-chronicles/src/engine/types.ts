@@ -135,10 +135,17 @@ export interface ExamState {
 // Core Game State
 // ---------------------------------------------------------------------------
 
+export interface RomanceState {
+  partnerId: string | null;
+  datingLevel: number;
+  datesCompleted: number;
+}
+
 export interface GameState {
   character: {
     name: string;
     appearance: string;
+    identity: string;
     difficulty: string;
     year: number; // 1-4
     week: number; // 1-40
@@ -151,6 +158,7 @@ export interface GameState {
     gpa: number;
     stats: StatBlock;
   };
+  romanceState: RomanceState;
   relationships: Relationship[];
   academics: AcademicRecord[];
   clubs: ClubMembership[];
@@ -162,6 +170,7 @@ export interface GameState {
   examState: ExamState | null;
   gamePhase: 'menu' | 'creating' | 'playing' | 'event' | 'exam' | 'ending';
   endingType: string | null;
+  notifications: { id: string; text: string; type: 'positive' | 'negative' | 'neutral' }[];
 }
 
 // ---------------------------------------------------------------------------

@@ -14,6 +14,7 @@ export type { GameState } from '@/engine/types';
 
 import { DIFFICULTY_PRESETS } from '@/engine/types';
 import { subjects } from '@/data/subjects';
+import { identities } from '@/data/identities';
 
 // ---------------------------------------------------------------------------
 // Constants
@@ -59,7 +60,7 @@ function getRelationshipTier(trust: number): string {
 interface GameStore extends GameState {
   // Character creation actions
   setCharacterName: (name: string) => void;
-  setCharacterAppearance: (appearance: string) => void;
+  setIdentity: (identityId: string) => void;
   setDifficulty: (difficulty: string) => void;
   allocateStat: (stat: string, value: number) => void;
   startGame: () => void;
@@ -78,6 +79,16 @@ interface GameStore extends GameState {
   socialize: (npcId: string) => void;
   attendClub: (clubId: string) => void;
   rest: () => void;
+  sleep: () => void;
+  exercise: () => void;
+
+  // Romance actions
+  goOnDate: (npcId: string) => void;
+  confess: (npcId: string) => void;
+  breakUp: () => void;
+
+  // Identity mood effects
+  applyIdentityMoodEffect: (activity: string) => string | null;
 
   // Event actions
   setCurrentEvent: (event: GameEvent | null) => void;
@@ -106,6 +117,10 @@ interface GameStore extends GameState {
   setFlag: (flag: string) => void;
   hasFlag: (flag: string) => boolean;
 
+  // Notification actions
+  addNotification: (text: string, type: 'positive' | 'negative' | 'neutral') => void;
+  removeNotification: (id: string) => void;
+
   // Save / Load
   saveGame: () => void;
   loadGame: () => boolean;
@@ -125,6 +140,7 @@ const initialState: GameState = {
   character: {
     name: '',
     appearance: '',
+    identity: '',
     difficulty: 'normal',
     year: 1,
     week: 1,
@@ -137,6 +153,11 @@ const initialState: GameState = {
     gpa: 0,
     stats: { ...DEFAULT_STATS },
   },
+  romanceState: {
+    partnerId: null,
+    datingLevel: 0,
+    datesCompleted: 0,
+  },
   relationships: [],
   academics: [],
   clubs: [],
@@ -148,6 +169,7 @@ const initialState: GameState = {
   examState: null,
   gamePhase: 'menu',
   endingType: null,
+  notifications: [],
 };
 
 // ---------------------------------------------------------------------------
@@ -163,8 +185,8 @@ export const useGameStore = create<GameStore>()((set, get) => ({
   setCharacterName: (name) =>
     set((s) => ({ character: { ...s.character, name } })),
 
-  setCharacterAppearance: (appearance) =>
-    set((s) => ({ character: { ...s.character, appearance } })),
+  setIdentity: (identityId) =>
+    set((s) => ({ character: { ...s.character, identity: identityId } })),
 
   setDifficulty: (difficulty) => {
     const preset = DIFFICULTY_PRESETS[difficulty];
@@ -197,9 +219,26 @@ export const useGameStore = create<GameStore>()((set, get) => ({
       grade: '',
       homeworkDone: false,
     }));
+
+    // Apply identity stat bonuses
+    const identityData = identities.find((i) => i.id === character.identity);
+    const newStats = { ...character.stats };
+    if (identityData) {
+      for (const [key, value] of Object.entries(identityData.statBonuses)) {
+        if (key in newStats) {
+          (newStats as Record<string, number>)[key] = clamp(
+            (newStats as Record<string, number>)[key] + value,
+            1,
+            100,
+          );
+        }
+      }
+    }
+
     set({
       character: {
         ...character,
+        stats: newStats,
         year: 1,
         week: 1,
         day: 0,
@@ -208,6 +247,11 @@ export const useGameStore = create<GameStore>()((set, get) => ({
         stress: 0,
         happiness: 50,
         gpa: 0,
+      },
+      romanceState: {
+        partnerId: null,
+        datingLevel: 0,
+        datesCompleted: 0,
       },
       academics,
       relationships: [],
@@ -220,6 +264,7 @@ export const useGameStore = create<GameStore>()((set, get) => ({
       flags: [],
       gamePhase: 'playing',
       endingType: null,
+      notifications: [],
     });
   },
 
@@ -342,58 +387,115 @@ export const useGameStore = create<GameStore>()((set, get) => ({
 
   // ----- Activity actions --------------------------------------------------
 
-  attendClass: (subjectId) =>
-    set((s) => ({
-      academics: s.academics.map((a) =>
-        a.subjectId === subjectId
-          ? { ...a, mastery: clamp(a.mastery + 3, 0, 100) }
-          : a,
-      ),
-      character: {
-        ...s.character,
-        energy: clamp(s.character.energy - 15, 0, s.character.maxEnergy),
-        stress: clamp(s.character.stress + 2, 0, 100),
-      },
-    })),
+  attendClass: (subjectId) => {
+    const state = get();
+    const newMastery = state.academics.map((a) =>
+      a.subjectId === subjectId
+        ? { ...a, mastery: clamp(a.mastery + 3, 0, 100) }
+        : a,
+    );
+    const masteryChange = newMastery.find((a) => a.subjectId === subjectId)!.mastery
+      - state.academics.find((a) => a.subjectId === subjectId)!.mastery;
+    const energyChange = -15;
+    const stressChange = 2;
 
-  doHomework: (subjectId) =>
-    set((s) => ({
-      academics: s.academics.map((a) =>
-        a.subjectId === subjectId
-          ? { ...a, mastery: clamp(a.mastery + 1, 0, 100), homeworkDone: true }
-          : a,
-      ),
-      character: {
-        ...s.character,
-        energy: clamp(s.character.energy - 10, 0, s.character.maxEnergy),
-        stress: clamp(s.character.stress + 3, 0, 100),
-      },
-    })),
+    const newCharacter = {
+      ...state.character,
+      energy: clamp(state.character.energy + energyChange, 0, state.character.maxEnergy),
+      stress: clamp(state.character.stress + stressChange, 0, 100),
+    };
 
-  study: (subjectId) =>
-    set((s) => ({
-      academics: s.academics.map((a) =>
-        a.subjectId === subjectId
-          ? { ...a, mastery: clamp(a.mastery + 5, 0, 100) }
-          : a,
-      ),
-      character: {
-        ...s.character,
-        energy: clamp(s.character.energy - 20, 0, s.character.maxEnergy),
-        stress: clamp(s.character.stress + 5, 0, 100),
-      },
-    })),
+    const moodDesc = state.applyIdentityMoodEffect('class');
+    const notifications = [...state.notifications];
+    const subject = subjects.find((s) => s.id === subjectId);
+    if (masteryChange > 0) notifications.push({ id: crypto.randomUUID(), text: `${subject?.name ?? subjectId}掌握度 +${masteryChange}`, type: 'positive' as const });
+    notifications.push({ id: crypto.randomUUID(), text: `精力 ${energyChange}`, type: 'negative' as const });
+    notifications.push({ id: crypto.randomUUID(), text: `压力 +${stressChange}`, type: 'negative' as const });
+    if (moodDesc) notifications.push({ id: crypto.randomUUID(), text: `心情变化：${moodDesc}`, type: 'positive' as const });
+
+    set({ academics: newMastery, character: newCharacter, notifications });
+  },
+
+  doHomework: (subjectId) => {
+    const state = get();
+    const newAcademics = state.academics.map((a) =>
+      a.subjectId === subjectId
+        ? { ...a, mastery: clamp(a.mastery + 1, 0, 100), homeworkDone: true }
+        : a,
+    );
+    const masteryChange = newAcademics.find((a) => a.subjectId === subjectId)!.mastery
+      - state.academics.find((a) => a.subjectId === subjectId)!.mastery;
+    const energyChange = -10;
+    const stressChange = 3;
+
+    const newCharacter = {
+      ...state.character,
+      energy: clamp(state.character.energy + energyChange, 0, state.character.maxEnergy),
+      stress: clamp(state.character.stress + stressChange, 0, 100),
+    };
+
+    const moodDesc = state.applyIdentityMoodEffect('homework');
+    const notifications = [...state.notifications];
+    const subject = subjects.find((s) => s.id === subjectId);
+    if (masteryChange > 0) notifications.push({ id: crypto.randomUUID(), text: `${subject?.name ?? subjectId}掌握度 +${masteryChange}`, type: 'positive' as const });
+    notifications.push({ id: crypto.randomUUID(), text: `精力 ${energyChange}`, type: 'negative' as const });
+    notifications.push({ id: crypto.randomUUID(), text: `压力 +${stressChange}`, type: 'negative' as const });
+    if (moodDesc) notifications.push({ id: crypto.randomUUID(), text: `心情变化：${moodDesc}`, type: 'positive' as const });
+
+    set({ academics: newAcademics, character: newCharacter, notifications });
+  },
+
+  study: (subjectId) => {
+    const state = get();
+    const newAcademics = state.academics.map((a) =>
+      a.subjectId === subjectId
+        ? { ...a, mastery: clamp(a.mastery + 5, 0, 100) }
+        : a,
+    );
+    const masteryChange = newAcademics.find((a) => a.subjectId === subjectId)!.mastery
+      - state.academics.find((a) => a.subjectId === subjectId)!.mastery;
+    const energyChange = -20;
+    const stressChange = 5;
+
+    const newCharacter = {
+      ...state.character,
+      energy: clamp(state.character.energy + energyChange, 0, state.character.maxEnergy),
+      stress: clamp(state.character.stress + stressChange, 0, 100),
+    };
+
+    const moodDesc = state.applyIdentityMoodEffect('study');
+    const notifications = [...state.notifications];
+    const subject = subjects.find((s) => s.id === subjectId);
+    if (masteryChange > 0) notifications.push({ id: crypto.randomUUID(), text: `${subject?.name ?? subjectId}掌握度 +${masteryChange}`, type: 'positive' as const });
+    notifications.push({ id: crypto.randomUUID(), text: `精力 ${energyChange}`, type: 'negative' as const });
+    notifications.push({ id: crypto.randomUUID(), text: `压力 +${stressChange}`, type: 'negative' as const });
+    if (moodDesc) notifications.push({ id: crypto.randomUUID(), text: `心情变化：${moodDesc}`, type: 'positive' as const });
+
+    set({ academics: newAcademics, character: newCharacter, notifications });
+  },
 
   socialize: (npcId) => {
-    const { relationships, character } = get();
+    const state = get();
+    const { relationships, character } = state;
     const existing = relationships.find((r) => r.npcId === npcId);
+
+    const energyChange = -10;
+    const stressChange = -5;
+    const baseHappinessChange = 5;
 
     const charUpdate = {
       ...character,
-      energy: clamp(character.energy - 10, 0, character.maxEnergy),
-      stress: clamp(character.stress - 5, 0, 100),
-      happiness: clamp(character.happiness + 5, 0, 100),
+      energy: clamp(character.energy + energyChange, 0, character.maxEnergy),
+      stress: clamp(character.stress + stressChange, 0, 100),
+      happiness: clamp(character.happiness + baseHappinessChange, 0, 100),
     };
+
+    const moodDesc = state.applyIdentityMoodEffect('socialize');
+    const notifications = [...state.notifications];
+    notifications.push({ id: crypto.randomUUID(), text: `精力 ${energyChange}`, type: 'negative' as const });
+    notifications.push({ id: crypto.randomUUID(), text: `压力 ${stressChange}`, type: 'positive' as const });
+    notifications.push({ id: crypto.randomUUID(), text: `心情 +${baseHappinessChange}`, type: 'positive' as const });
+    if (moodDesc) notifications.push({ id: crypto.randomUUID(), text: `心情变化：${moodDesc}`, type: 'positive' as const });
 
     if (existing) {
       const newTrust = clamp(existing.trust + 5, 0, 100);
@@ -404,6 +506,7 @@ export const useGameStore = create<GameStore>()((set, get) => ({
             : r,
         ),
         character: charUpdate,
+        notifications,
       });
     } else {
       const newRel: Relationship = {
@@ -415,24 +518,38 @@ export const useGameStore = create<GameStore>()((set, get) => ({
       set({
         relationships: [...relationships, newRel],
         character: charUpdate,
+        notifications,
       });
     }
   },
 
-  attendClub: (clubId) =>
-    set((s) => ({
-      clubs: s.clubs.map((c) =>
-        c.clubId === clubId
-          ? { ...c, skill: clamp(c.skill + 3, 0, 100) }
-          : c,
-      ),
-      character: {
-        ...s.character,
-        energy: clamp(s.character.energy - 15, 0, s.character.maxEnergy),
-        stress: clamp(s.character.stress - 5, 0, 100),
-        happiness: clamp(s.character.happiness + 3, 0, 100),
-      },
-    })),
+  attendClub: (clubId) => {
+    const state = get();
+    const newClubs = state.clubs.map((c) =>
+      c.clubId === clubId
+        ? { ...c, skill: clamp(c.skill + 3, 0, 100) }
+        : c,
+    );
+    const energyChange = -15;
+    const stressChange = -5;
+    const baseHappinessChange = 3;
+
+    const newCharacter = {
+      ...state.character,
+      energy: clamp(state.character.energy + energyChange, 0, state.character.maxEnergy),
+      stress: clamp(state.character.stress + stressChange, 0, 100),
+      happiness: clamp(state.character.happiness + baseHappinessChange, 0, 100),
+    };
+
+    const moodDesc = state.applyIdentityMoodEffect('club');
+    const notifications = [...state.notifications];
+    notifications.push({ id: crypto.randomUUID(), text: `精力 ${energyChange}`, type: 'negative' as const });
+    notifications.push({ id: crypto.randomUUID(), text: `压力 ${stressChange}`, type: 'positive' as const });
+    notifications.push({ id: crypto.randomUUID(), text: `心情 +${baseHappinessChange}`, type: 'positive' as const });
+    if (moodDesc) notifications.push({ id: crypto.randomUUID(), text: `心情变化：${moodDesc}`, type: 'positive' as const });
+
+    set({ clubs: newClubs, character: newCharacter, notifications });
+  },
 
   rest: () =>
     set((s) => ({
@@ -443,6 +560,215 @@ export const useGameStore = create<GameStore>()((set, get) => ({
         happiness: clamp(s.character.happiness + 5, 0, 100),
       },
     })),
+
+  sleep: () => {
+    const state = get();
+    const { character } = state;
+
+    // Restore energy to max, reduce stress, advance to next morning
+    const newCharacter = {
+      ...character,
+      energy: character.maxEnergy,
+      stress: clamp(character.stress - 20, 0, 100),
+    };
+
+    // Apply identity-based mood recovery
+    const identityData = identities.find((i) => i.id === character.identity);
+    if (identityData) {
+      const restTrigger = identityData.moodTriggers.find((t) => t.activity === 'rest');
+      if (restTrigger) {
+        newCharacter.happiness = clamp(character.happiness + restTrigger.happinessGain, 0, 100);
+      }
+    }
+
+    // Advance to next morning
+    if (character.day < 6) {
+      newCharacter.day = character.day + 1;
+    } else if (character.week < 40) {
+      newCharacter.day = 0;
+      newCharacter.week = character.week + 1;
+    } else {
+      newCharacter.day = 0;
+      newCharacter.week = 1;
+      newCharacter.year = character.year + 1;
+    }
+    newCharacter.currentSlot = 'morning' as const;
+
+    const notifications = [...state.notifications];
+    notifications.push({ id: crypto.randomUUID(), text: '精力已完全恢复', type: 'positive' as const });
+    notifications.push({ id: crypto.randomUUID(), text: '压力 -20', type: 'positive' as const });
+
+    set({ character: newCharacter, notifications });
+  },
+
+  exercise: () => {
+    const state = get();
+    const { character } = state;
+
+    const energyChange = -15;
+    const stressChange = -5;
+
+    const newCharacter = {
+      ...character,
+      energy: clamp(character.energy + energyChange, 0, character.maxEnergy),
+      stress: clamp(character.stress + stressChange, 0, 100),
+      stats: {
+        ...character.stats,
+        athleticism: clamp(character.stats.athleticism + 2, 1, 100),
+      },
+    };
+
+    const moodDesc = state.applyIdentityMoodEffect('exercise');
+    const notifications = [...state.notifications];
+    notifications.push({ id: crypto.randomUUID(), text: '运动能力 +2', type: 'positive' as const });
+    notifications.push({ id: crypto.randomUUID(), text: `精力 ${energyChange}`, type: 'negative' as const });
+    notifications.push({ id: crypto.randomUUID(), text: `压力 ${stressChange}`, type: 'positive' as const });
+    if (moodDesc) notifications.push({ id: crypto.randomUUID(), text: `心情变化：${moodDesc}`, type: 'positive' as const });
+
+    set({ character: newCharacter, notifications });
+  },
+
+  goOnDate: (npcId) => {
+    const state = get();
+    const { character, romanceState, relationships } = state;
+
+    if (character.energy < 20) return;
+    if (romanceState.partnerId && romanceState.partnerId !== npcId) return;
+
+    const energyChange = -20;
+    const romanceChange = 10;
+    const baseHappinessChange = 10;
+
+    const newCharacter = {
+      ...character,
+      energy: clamp(character.energy + energyChange, 0, character.maxEnergy),
+      happiness: clamp(character.happiness + baseHappinessChange, 0, 100),
+    };
+
+    // Apply identity mood effect for socialize-like activity
+    const moodDesc = state.applyIdentityMoodEffect('socialize');
+
+    // Update relationship
+    const existing = relationships.find((r) => r.npcId === npcId);
+    let newRelationships = relationships;
+    if (existing) {
+      newRelationships = relationships.map((r) =>
+        r.npcId === npcId
+          ? { ...r, romance: clamp(r.romance + romanceChange, 0, 100) }
+          : r,
+      );
+    }
+
+    const newRomanceState = {
+      ...romanceState,
+      datesCompleted: romanceState.datesCompleted + 1,
+    };
+
+    const notifications = [...state.notifications];
+    notifications.push({ id: crypto.randomUUID(), text: `精力 ${energyChange}`, type: 'negative' as const });
+    notifications.push({ id: crypto.randomUUID(), text: `浪漫度 +${romanceChange}`, type: 'positive' as const });
+    notifications.push({ id: crypto.randomUUID(), text: `心情 +${baseHappinessChange}`, type: 'positive' as const });
+    if (moodDesc) notifications.push({ id: crypto.randomUUID(), text: `心情变化：${moodDesc}`, type: 'positive' as const });
+
+    set({ character: newCharacter, relationships: newRelationships, romanceState: newRomanceState, notifications });
+  },
+
+  confess: (npcId) => {
+    const state = get();
+    const { character, relationships, romanceState } = state;
+
+    if (romanceState.partnerId) return; // already in a relationship
+
+    const rel = relationships.find((r) => r.npcId === npcId);
+    if (!rel || rel.trust < 50 || rel.romance < 30) return;
+
+    // Success based on trust + charisma + luck
+    const successChance = (rel.trust + character.stats.charisma * 2 + character.stats.luck) / 200;
+    const success = Math.random() < successChance;
+
+    const notifications = [...state.notifications];
+
+    if (success) {
+      const newRomanceState = {
+        partnerId: npcId,
+        datingLevel: 1,
+        datesCompleted: 0,
+      };
+      const newRelationships = relationships.map((r) =>
+        r.npcId === npcId
+          ? { ...r, romance: clamp(r.romance + 20, 0, 100) }
+          : r,
+      );
+      const newCharacter = {
+        ...character,
+        happiness: clamp(character.happiness + 20, 0, 100),
+      };
+      notifications.push({ id: crypto.randomUUID(), text: '表白成功！你们开始交往了！', type: 'positive' as const });
+      set({ romanceState: newRomanceState, relationships: newRelationships, character: newCharacter, notifications });
+    } else {
+      const newCharacter = {
+        ...character,
+        happiness: clamp(character.happiness - 10, 0, 100),
+      };
+      notifications.push({ id: crypto.randomUUID(), text: '表白失败了……', type: 'negative' as const });
+      set({ character: newCharacter, notifications });
+    }
+  },
+
+  breakUp: () => {
+    const state = get();
+    const { romanceState, character } = state;
+
+    if (!romanceState.partnerId) return;
+
+    const newCharacter = {
+      ...character,
+      happiness: clamp(character.happiness - 30, 0, 100),
+    };
+
+    const newRomanceState: typeof romanceState = {
+      partnerId: null,
+      datingLevel: 0,
+      datesCompleted: 0,
+    };
+
+    const notifications = [...state.notifications];
+    notifications.push({ id: crypto.randomUUID(), text: '你们分手了……心情 -30', type: 'negative' as const });
+
+    set({ character: newCharacter, romanceState: newRomanceState, notifications });
+  },
+
+  applyIdentityMoodEffect: (activity) => {
+    const { character } = get();
+    const identityData = identities.find((i) => i.id === character.identity);
+    if (!identityData) return null;
+
+    // Check mood triggers
+    const trigger = identityData.moodTriggers.find((t) => t.activity === activity);
+    if (trigger) {
+      set((s) => ({
+        character: {
+          ...s.character,
+          happiness: clamp(s.character.happiness + trigger.happinessGain, 0, 100),
+        },
+      }));
+      return `+${trigger.happinessGain} ${trigger.description}`;
+    }
+
+    // Check mood drains
+    const drain = identityData.moodDrains.find((d) => d.activity === activity);
+    if (drain) {
+      set((s) => ({
+        character: {
+          ...s.character,
+          happiness: clamp(s.character.happiness - drain.happinessLoss, 0, 100),
+        },
+      }));
+      return `-${drain.happinessLoss} ${drain.description}`;
+    }
+
+    return null;
+  },
 
   // ----- Event actions -----------------------------------------------------
 
@@ -692,6 +1018,18 @@ export const useGameStore = create<GameStore>()((set, get) => ({
   },
 
   hasFlag: (flag) => get().flags.includes(flag),
+
+  // ----- Notification actions -----------------------------------------------
+
+  addNotification: (text, type) => {
+    const { notifications } = get();
+    set({ notifications: [...notifications, { id: crypto.randomUUID(), text, type }] });
+  },
+
+  removeNotification: (id) => {
+    const { notifications } = get();
+    set({ notifications: notifications.filter((n) => n.id !== id) });
+  },
 
   // ----- Save / Load -------------------------------------------------------
 

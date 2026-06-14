@@ -1,6 +1,8 @@
 import { useGameStore } from "@/store/gameStore";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
+import { npcs } from "@/data/npcs";
+import { identities } from "@/data/identities";
 
 const ENDINGS: Record<string, { emoji: string; title: string; desc: string }> = {
   Valedictorian: {
@@ -22,6 +24,11 @@ const ENDINGS: Record<string, { emoji: string; title: string; desc: string }> = 
     emoji: "🎨",
     title: "艺术天才",
     desc: "你的创造力没有边界。校园的墙壁仍在回响着你的画作、音乐和表演。",
+  },
+  "True Love": {
+    emoji: "💕",
+    title: "真爱至上",
+    desc: "在学业之外，你找到了最珍贵的宝藏——一段真挚的感情。你们约定毕业后也要在一起。",
   },
   Burnout: {
     emoji: "😩",
@@ -45,8 +52,10 @@ function determineEnding(
   stats: { intelligence: number; charisma: number; athleticism: number; creativity: number },
   happiness: number,
   stress: number,
-  clubs: { skill: number }[]
+  clubs: { skill: number }[],
+  romanceState: { partnerId: string | null; datingLevel: number; datesCompleted: number },
 ): string {
+  if (romanceState.partnerId && romanceState.datingLevel >= 3 && romanceState.datesCompleted >= 5) return "True Love";
   if (gpa >= 3.8 && stats.intelligence >= 15) return "Valedictorian";
   if (stats.charisma >= 15 && happiness >= 70) return "Popular Star";
   if (stats.athleticism >= 15 && clubs.some((c) => c.skill >= 50)) return "Athlete Champion";
@@ -81,18 +90,22 @@ function ConfettiParticle({ index }: { index: number }) {
 
 export default function EndingScreen() {
   const navigate = useNavigate();
-  const { character, clubs, relationships, eventLog, newGame } = useGameStore();
+  const { character, clubs, relationships, eventLog, romanceState, newGame } = useGameStore();
+
+  const identityData = identities.find((i) => i.id === character.identity);
 
   const endingKey = determineEnding(
     character.gpa,
     character.stats,
     character.happiness,
     character.stress,
-    clubs
+    clubs,
+    romanceState
   );
   const ending = ENDINGS[endingKey];
   const friendCount = relationships.filter((r) => r.trust >= 40).length;
   const keyMoments = eventLog.slice(-4);
+  const partner = romanceState.partnerId ? npcs.find((n) => n.id === romanceState.partnerId) : null;
 
   const handlePlayAgain = () => {
     newGame();
@@ -148,6 +161,7 @@ export default function EndingScreen() {
             数据总结
           </h2>
           <div className="grid grid-cols-2 gap-3 text-sm">
+            <Stat label="身份" value={identityData ? `${identityData.emoji} ${identityData.name}` : '学生'} />
             <Stat label="GPA" value={character.gpa.toFixed(2)} />
             <Stat label="幸福感" value={`${character.happiness}%`} />
             <Stat label="智力" value={character.stats.intelligence} />
@@ -156,6 +170,7 @@ export default function EndingScreen() {
             <Stat label="创造力" value={character.stats.creativity} />
             <Stat label="加入社团" value={clubs.length} />
             <Stat label="结交朋友" value={friendCount} />
+            {partner && <Stat label="恋人" value={`${partner.portrait} ${partner.name.split(' ')[0]}`} />}
           </div>
         </motion.div>
 
