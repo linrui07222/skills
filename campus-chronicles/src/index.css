@@ -1,0 +1,169 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  /* Game color palette */
+  --color-primary: #F59E0B;
+  --color-base: #1E293B;
+  --color-highlight: #FEF3C7;
+  --color-academic: #14B8A6;
+  --color-social: #F43F5E;
+  --color-extracurricular: #8B5CF6;
+
+  /* Background tones */
+  --color-cream: #FFFBEB;
+  --color-warm-white: #FFF7ED;
+  --color-soft-gray: #F1F5F9;
+
+  font-family: "Nunito", sans-serif;
+  line-height: 1.6;
+  font-weight: 400;
+  color: var(--color-base);
+
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+@layer base {
+  body {
+    @apply bg-cream font-body text-base;
+    min-height: 100vh;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-display;
+  }
+
+  h1 {
+    @apply text-4xl font-bold;
+  }
+
+  h2 {
+    @apply text-3xl font-semibold;
+  }
+
+  h3 {
+    @apply text-2xl font-semibold;
+  }
+
+  h4 {
+    @apply text-xl font-medium;
+  }
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--color-soft-gray);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--color-primary);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #D97706;
+}
+
+/* Animation keyframes */
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+@keyframes pulse-slow {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.7;
+  }
+}
+
+@keyframes slide-up {
+  0% {
+    transform: translateY(20px);
+    opacity: 0;
+  }
+  100% {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+@keyframes fade-in {
+  0% {
+    opacity: 0;
+  }
+  100% {
+    opacity: 1;
+  }
+}
+
+@layer utilities {
+  /* Glass-morphism panel */
+  .glass-panel {
+    @apply bg-white/70 backdrop-blur-md border border-white/20 rounded-2xl shadow-card;
+  }
+
+  /* Gradient text */
+  .gradient-text {
+    @apply bg-clip-text text-transparent bg-gradient-to-r from-primary to-extracurricular;
+  }
+
+  /* Yearbook-style card */
+  .yearbook-card {
+    @apply bg-white rounded-2xl shadow-card hover:shadow-hover transition-all duration-300 p-6;
+  }
+
+  /* Stat badge */
+  .stat-badge {
+    @apply inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-sm font-semibold font-body;
+  }
+
+  /* Academic accent */
+  .accent-academic {
+    @apply text-academic bg-academic/10;
+  }
+
+  /* Social accent */
+  .accent-social {
+    @apply text-social bg-social/10;
+  }
+
+  /* Extracurricular accent */
+  .accent-extracurricular {
+    @apply text-extracurricular bg-extracurricular/10;
+  }
+
+  /* Warm button */
+  .btn-warm {
+    @apply bg-primary text-white font-display font-semibold px-6 py-2.5 rounded-xl
+           shadow-card hover:shadow-hover hover:bg-amber-600
+           transition-all duration-300 active:scale-95;
+  }
+
+  /* Cozy input */
+  .cozy-input {
+    @apply w-full px-4 py-2.5 rounded-xl border-2 border-amber-200
+           focus:border-primary focus:ring-2 focus:ring-primary/20
+           bg-white font-body text-base outline-none transition-all duration-200;
+  }
+
+  /* Animated entrance */
+  .animate-entrance {
+    animation: slide-up 0.5s ease-out, fade-in 0.6s ease-out;
+  }
+}

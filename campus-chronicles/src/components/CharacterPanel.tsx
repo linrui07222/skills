@@ -1,0 +1,151 @@
+import { motion } from 'framer-motion';
+import { useGameStore } from '@/store/gameStore';
+import { subjects } from '@/data/subjects';
+import { clubs } from '@/data/clubs';
+
+const STAT_COLORS: Record<string, string> = {
+  intelligence: 'bg-blue-500',
+  charisma: 'bg-amber-500',
+  athleticism: 'bg-red-500',
+  creativity: 'bg-pink-500',
+  diligence: 'bg-green-500',
+  luck: 'bg-purple-500',
+};
+
+const STAT_LABELS: Record<string, string> = {
+  intelligence: 'Intelligence',
+  charisma: 'Charisma',
+  athleticism: 'Athleticism',
+  creativity: 'Creativity',
+  diligence: 'Diligence',
+  luck: 'Luck',
+};
+
+interface Props {
+  open: boolean;
+  onClose: () => void;
+}
+
+export default function CharacterPanel({ open, onClose }: Props) {
+  const character = useGameStore((s) => s.character);
+  const academics = useGameStore((s) => s.academics);
+  const clubMemberships = useGameStore((s) => s.clubs);
+
+  if (!open) return null;
+
+  return (
+    <motion.div
+      className="fixed inset-y-0 right-0 z-40 w-full max-w-sm"
+      initial={{ x: '100%' }}
+      animate={{ x: 0 }}
+      exit={{ x: '100%' }}
+      transition={{ type: 'spring', damping: 24, stiffness: 260 }}
+    >
+      <div className="h-full bg-amber-50 border-l border-amber-200 shadow-2xl overflow-y-auto p-5">
+        {/* Close */}
+        <button
+          onClick={onClose}
+          className="mb-4 text-sm font-medium text-navy-600 hover:text-navy-900"
+        >
+          ✕ Close
+        </button>
+
+        {/* Name & portrait */}
+        <div className="text-center mb-5">
+          <div className="text-5xl mb-1">{character.appearance || '🧑‍🎓'}</div>
+          <h2 className="text-lg font-bold text-navy-900">{character.name || 'Student'}</h2>
+          <p className="text-xs text-navy-600">GPA: {character.gpa.toFixed(1)}</p>
+        </div>
+
+        {/* Stat bars */}
+        <div className="space-y-2 mb-5">
+          {(Object.keys(STAT_LABELS) as Array<keyof typeof STAT_LABELS>).map((key) => (
+            <div key={key}>
+              <div className="flex justify-between text-xs text-navy-700 mb-0.5">
+                <span>{STAT_LABELS[key]}</span>
+                <span>{character.stats[key]}</span>
+              </div>
+              <div className="h-2 rounded-full bg-amber-200 overflow-hidden">
+                <div
+                  className={`h-full rounded-full ${STAT_COLORS[key]}`}
+                  style={{ width: `${(character.stats[key] / 20) * 100}%` }}
+                />
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* Energy / Stress / Happiness */}
+        <div className="space-y-2 mb-5">
+          <MeterBar label="Energy" value={character.energy} max={character.maxEnergy} color="bg-emerald-500" />
+          <MeterBar label="Stress" value={character.stress} max={100} color="bg-orange-500" />
+          <MeterBar label="Happiness" value={character.happiness} max={100} color="bg-yellow-400" />
+        </div>
+
+        {/* Academic record */}
+        <h3 className="text-sm font-bold text-navy-800 mb-2">Academics</h3>
+        <div className="space-y-1.5 mb-5">
+          {academics.map((a) => {
+            const sub = subjects.find((s) => s.id === a.subjectId);
+            return (
+              <div key={a.subjectId}>
+                <div className="flex justify-between text-xs text-navy-700">
+                  <span>{sub?.name ?? a.subjectId}</span>
+                  <span>{a.mastery}%</span>
+                </div>
+                <div className="h-1.5 rounded-full bg-amber-200 overflow-hidden">
+                  <div
+                    className="h-full rounded-full bg-blue-400"
+                    style={{ width: `${a.mastery}%` }}
+                  />
+                </div>
+              </div>
+            );
+          })}
+        </div>
+
+        {/* Clubs */}
+        <h3 className="text-sm font-bold text-navy-800 mb-2">Clubs</h3>
+        {clubMemberships.length === 0 && (
+          <p className="text-xs text-navy-500">No clubs joined yet.</p>
+        )}
+        <div className="space-y-1.5">
+          {clubMemberships.map((c) => {
+            const club = clubs.find((cl) => cl.id === c.clubId);
+            return (
+              <div key={c.clubId}>
+                <div className="flex justify-between text-xs text-navy-700">
+                  <span>{club?.name ?? c.clubId}</span>
+                  <span>{club?.skillName}: {c.skill}</span>
+                </div>
+                <div className="h-1.5 rounded-full bg-amber-200 overflow-hidden">
+                  <div
+                    className="h-full rounded-full bg-pink-400"
+                    style={{ width: `${c.skill}%` }}
+                  />
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    </motion.div>
+  );
+}
+
+function MeterBar({ label, value, max, color }: { label: string; value: number; max: number; color: string }) {
+  return (
+    <div>
+      <div className="flex justify-between text-xs text-navy-700 mb-0.5">
+        <span>{label}</span>
+        <span>{value}/{max}</span>
+      </div>
+      <div className="h-2 rounded-full bg-amber-200 overflow-hidden">
+        <div
+          className={`h-full rounded-full ${color}`}
+          style={{ width: `${(value / max) * 100}%` }}
+        />
+      </div>
+    </div>
+  );
+}
