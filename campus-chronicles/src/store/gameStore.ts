@@ -15,6 +15,10 @@ export type { GameState } from '@/engine/types';
 import { DIFFICULTY_PRESETS } from '@/engine/types';
 import { subjects } from '@/data/subjects';
 import { identities } from '@/data/identities';
+import { talents } from '@/data/talents';
+import { achievements } from '@/data/achievements';
+import { skins } from '@/data/skins';
+import { calculateInheritanceRate, getNGPlusConfig } from '@/data/ngplus';
 
 // ---------------------------------------------------------------------------
 // Constants
@@ -51,6 +55,130 @@ function getRelationshipTier(trust: number): string {
   if (trust >= 40) return 'Friend';
   if (trust >= 20) return 'Acquaintance';
   return 'Stranger';
+}
+
+// Achievement point values per achievement (since Achievement interface uses condition: string)
+const ACHIEVEMENT_POINTS: Record<string, number> = {
+  'ach-all-pass': 5,
+  'ach-scholar-path': 10,
+  'ach-perfect-score': 15,
+  'ach-monthly-first': 15,
+  'ach-final-comeback': 10,
+  'ach-mistake-master': 10,
+  'ach-competition-champion': 20,
+  'ach-first-friend': 5,
+  'ach-social-butterfly': 10,
+  'ach-everyones-friend': 15,
+  'ach-party-star': 10,
+  'ach-teacher-deep-bond': 10,
+  'ach-club-newbie': 5,
+  'ach-club-core': 10,
+  'ach-club-president': 15,
+  'ach-dual-president': 20,
+  'ach-first-love': 10,
+  'ach-passionate-love': 10,
+  'ach-soulmate': 15,
+  'ach-heartbreak': 5,
+  'ach-repeat-student': 10,
+  'ach-youth-regret': 5,
+  'ach-entrepreneur': 15,
+  'ach-vocational-star': 15,
+  'ach-perfect-youth': 25,
+  'ach-time-reversal': 15,
+  'ach-ngplus-start': 10,
+  'ach-talent-awaken': 10,
+  'ach-perfect-ending-ng': 20,
+  'ach-omni-scholar': 25,
+  'ach-no-regrets': 20,
+  'ach-free-life': 15,
+};
+
+// Achievement condition checker functions
+function checkAchievementCondition(
+  id: string,
+  state: {
+    stats: Record<string, number>;
+    gpa: number;
+    relationships: { npcId: string; trust: number; romance: number }[];
+    clubs: { clubId: string; skill: number; role: string }[];
+    academics: { subjectId: string; mastery: number }[];
+    flags: string[];
+    completedEndings: string[];
+    playthrough: number;
+    happiness: number;
+    stress: number;
+    romanceState: { partnerId: string | null; datingLevel: number };
+    eventLog: { eventId: string; choiceIndex: number; week: number }[];
+  },
+): boolean {
+  switch (id) {
+    case 'ach-all-pass':
+      return state.academics.length > 0 && state.academics.every((a) => a.mastery >= 60);
+    case 'ach-scholar-path':
+      return state.academics.length > 0 && state.academics.every((a) => a.mastery >= 80);
+    case 'ach-perfect-score':
+      return state.flags.includes('exam-perfect-score');
+    case 'ach-monthly-first':
+      return state.flags.includes('exam-ranked-first');
+    case 'ach-final-comeback':
+      return state.flags.includes('exam-comeback');
+    case 'ach-mistake-master':
+      return state.flags.includes('mistake-master-100');
+    case 'ach-competition-champion':
+      return state.flags.includes('competition-champion');
+    case 'ach-first-friend':
+      return state.relationships.some((r) => r.trust >= 40);
+    case 'ach-social-butterfly':
+      return state.relationships.filter((r) => r.trust >= 40).length >= 5;
+    case 'ach-everyones-friend':
+      return state.relationships.length > 0 && state.relationships.every((r) => r.trust >= 40);
+    case 'ach-party-star':
+      return state.eventLog.filter((e) => e.eventId.startsWith('social-')).length >= 10;
+    case 'ach-teacher-deep-bond':
+      return state.flags.includes('teacher-deep-bond');
+    case 'ach-club-newbie':
+      return state.clubs.length >= 1;
+    case 'ach-club-core':
+      return state.clubs.some((c) => c.skill >= 50);
+    case 'ach-club-president':
+      return state.clubs.some((c) => c.role === 'president');
+    case 'ach-dual-president':
+      return state.clubs.filter((c) => c.role === 'president').length >= 2;
+    case 'ach-first-love':
+      return state.romanceState.partnerId !== null;
+    case 'ach-passionate-love':
+      return state.romanceState.datingLevel >= 2;
+    case 'ach-soulmate':
+      return state.romanceState.datingLevel >= 4;
+    case 'ach-heartbreak':
+      return state.flags.includes('heartbreak');
+    case 'ach-repeat-student':
+      return state.completedEndings.length >= 1;
+    case 'ach-youth-regret':
+      return state.flags.includes('ending-regret');
+    case 'ach-entrepreneur':
+      return state.flags.includes('entrepreneur-complete');
+    case 'ach-vocational-star':
+      return state.flags.includes('ending-vocational');
+    case 'ach-perfect-youth':
+      return state.flags.includes('ending-perfect');
+    case 'ach-time-reversal':
+      return state.playthrough >= 2;
+    case 'ach-ngplus-start':
+      return state.playthrough >= 2;
+    case 'ach-talent-awaken':
+      return state.flags.includes('talent-selected');
+    case 'ach-perfect-ending-ng':
+      return state.flags.includes('ending-perfect') && state.playthrough >= 2;
+    case 'ach-omni-scholar':
+      return state.academics.every((a) => a.mastery >= 100) && state.relationships.every((r) => r.trust >= 80);
+    case 'ach-no-regrets':
+      return state.flags.includes('all-events-complete');
+    case 'ach-free-life':
+      return state.playthrough >= 4;
+    default:
+      return false;
+  }
 }
 
 // ---------------------------------------------------------------------------
@@ -126,6 +254,15 @@ interface GameStore extends GameState {
   loadGame: () => boolean;
   hasSave: () => boolean;
   newGame: () => void;
+  resetFullGame: () => void;
+
+  // NG+ actions
+  selectTalent: (talentId: string) => void;
+  unlockAchievement: (achievementId: string) => void;
+  unlockSkin: (skinId: string) => void;
+  setActiveSkin: (skinId: string) => void;
+  startNGPlus: () => void;
+  checkAchievements: () => void;
 
   // Phase management
   setGamePhase: (phase: string) => void;
@@ -170,6 +307,22 @@ const initialState: GameState = {
   gamePhase: 'menu',
   endingType: null,
   notifications: [],
+  ngplus: {
+    playthrough: 1,
+    isNGPlus: false,
+    isFreeMode: false,
+    selectedTalent: null,
+    unlockedTalents: [],
+    unlockedAchievements: [],
+    completedEndings: [],
+    unlockedSkins: ['skin-default-uniform', 'skin-default-shoes', 'skin-default-bag', 'skin-sunny', 'skin-bgm-default'],
+    activeSkin: 'skin-default-uniform',
+    achievementPoints: 0,
+    clubLimit: 2,
+    negativeEventReduction: 0,
+    studyEfficiencyBonus: 0,
+    inheritedStats: null,
+  },
 };
 
 // ---------------------------------------------------------------------------
@@ -212,7 +365,7 @@ export const useGameStore = create<GameStore>()((set, get) => ({
     })),
 
   startGame: () => {
-    const { character } = get();
+    const { character, ngplus } = get();
     const academics: AcademicRecord[] = subjects.map((sub) => ({
       subjectId: sub.id,
       mastery: 10,
@@ -235,6 +388,35 @@ export const useGameStore = create<GameStore>()((set, get) => ({
       }
     }
 
+    // Apply inherited stats if ngplus.inheritedStats exists
+    if (ngplus.inheritedStats) {
+      for (const [key, value] of Object.entries(ngplus.inheritedStats)) {
+        if (key in newStats) {
+          (newStats as Record<string, number>)[key] = clamp(
+            (newStats as Record<string, number>)[key] + value,
+            1,
+            100,
+          );
+        }
+      }
+    }
+
+    // Apply selected talent modifiers (store reference; gameplay effects applied by engine)
+    let talentMaxEnergyBonus = 0;
+    if (ngplus.selectedTalent) {
+      const talentData = talents.find((t) => t.id === ngplus.selectedTalent);
+      if (talentData) {
+        talentMaxEnergyBonus = talentData.modifiers.maxEnergyBonus ?? 0;
+      }
+    }
+
+    // Apply NG+ club limit
+    const clubLimit = ngplus.clubLimit;
+    // Apply NG+ study efficiency bonus
+    const studyEfficiencyBonus = ngplus.studyEfficiencyBonus;
+    // Apply talent max energy bonus
+    const newMaxEnergy = character.maxEnergy + talentMaxEnergyBonus;
+
     set({
       character: {
         ...character,
@@ -243,7 +425,8 @@ export const useGameStore = create<GameStore>()((set, get) => ({
         week: 1,
         day: 0,
         currentSlot: 'morning',
-        energy: character.maxEnergy,
+        energy: newMaxEnergy,
+        maxEnergy: newMaxEnergy,
         stress: 0,
         happiness: 50,
         gpa: 0,
@@ -261,10 +444,15 @@ export const useGameStore = create<GameStore>()((set, get) => ({
       pendingEvents: [],
       examState: null,
       eventLog: [],
-      flags: [],
+      flags: ngplus.isNGPlus ? ['ngplus-active'] : [],
       gamePhase: 'playing',
       endingType: null,
       notifications: [],
+      ngplus: {
+        ...ngplus,
+        clubLimit,
+        studyEfficiencyBonus,
+      },
     });
   },
 
@@ -389,9 +577,10 @@ export const useGameStore = create<GameStore>()((set, get) => ({
 
   attendClass: (subjectId) => {
     const state = get();
+    const bonus = state.ngplus.studyEfficiencyBonus;
     const newMastery = state.academics.map((a) =>
       a.subjectId === subjectId
-        ? { ...a, mastery: clamp(a.mastery + 3, 0, 100) }
+        ? { ...a, mastery: clamp(a.mastery + 3 + bonus, 0, 100) }
         : a,
     );
     const masteryChange = newMastery.find((a) => a.subjectId === subjectId)!.mastery
@@ -418,9 +607,10 @@ export const useGameStore = create<GameStore>()((set, get) => ({
 
   doHomework: (subjectId) => {
     const state = get();
+    const bonus = state.ngplus.studyEfficiencyBonus;
     const newAcademics = state.academics.map((a) =>
       a.subjectId === subjectId
-        ? { ...a, mastery: clamp(a.mastery + 1, 0, 100), homeworkDone: true }
+        ? { ...a, mastery: clamp(a.mastery + 1 + bonus, 0, 100), homeworkDone: true }
         : a,
     );
     const masteryChange = newAcademics.find((a) => a.subjectId === subjectId)!.mastery
@@ -447,9 +637,10 @@ export const useGameStore = create<GameStore>()((set, get) => ({
 
   study: (subjectId) => {
     const state = get();
+    const bonus = state.ngplus.studyEfficiencyBonus;
     const newAcademics = state.academics.map((a) =>
       a.subjectId === subjectId
-        ? { ...a, mastery: clamp(a.mastery + 5, 0, 100) }
+        ? { ...a, mastery: clamp(a.mastery + 5 + bonus, 0, 100) }
         : a,
     );
     const masteryChange = newAcademics.find((a) => a.subjectId === subjectId)!.mastery
@@ -775,20 +966,23 @@ export const useGameStore = create<GameStore>()((set, get) => ({
   setCurrentEvent: (event) => set({ currentEvent: event }),
 
   resolveChoice: (choiceIndex) => {
-    const { currentEvent, flags, eventLog, character, relationships, pendingEvents } =
+    const { currentEvent, flags, eventLog, character, relationships, pendingEvents, ngplus } =
       get();
     if (!currentEvent || choiceIndex >= currentEvent.choices.length) return;
 
     const choice = currentEvent.choices[choiceIndex];
     const consequences = choice.consequences;
+    const reduction = ngplus.negativeEventReduction;
 
     // --- Character stat changes ---
     const newStats = { ...character.stats };
     if (consequences.stats) {
       for (const [key, value] of Object.entries(consequences.stats)) {
         if (key in newStats) {
+          // Apply negative event reduction for negative stat changes
+          const adjustedValue = value < 0 ? Math.round(value * (1 - reduction)) : value;
           (newStats as Record<string, number>)[key] = clamp(
-            (newStats as Record<string, number>)[key] + value,
+            (newStats as Record<string, number>)[key] + adjustedValue,
             1,
             100,
           );
@@ -801,13 +995,25 @@ export const useGameStore = create<GameStore>()((set, get) => ({
     let newHappiness = character.happiness;
 
     if (consequences.energy !== undefined) {
-      newEnergy = clamp(character.energy + consequences.energy, 0, character.maxEnergy);
+      // Apply negative event reduction for negative energy changes
+      const adjustedEnergy = consequences.energy < 0
+        ? Math.round(consequences.energy * (1 - reduction))
+        : consequences.energy;
+      newEnergy = clamp(character.energy + adjustedEnergy, 0, character.maxEnergy);
     }
     if (consequences.stress !== undefined) {
-      newStress = clamp(character.stress + consequences.stress, 0, 100);
+      // Apply negative event reduction for positive stress changes (stress increase is negative)
+      const adjustedStress = consequences.stress > 0
+        ? Math.round(consequences.stress * (1 - reduction))
+        : consequences.stress;
+      newStress = clamp(character.stress + adjustedStress, 0, 100);
     }
     if (consequences.happiness !== undefined) {
-      newHappiness = clamp(character.happiness + consequences.happiness, 0, 100);
+      // Apply negative event reduction for negative happiness changes
+      const adjustedHappiness = consequences.happiness < 0
+        ? Math.round(consequences.happiness * (1 - reduction))
+        : consequences.happiness;
+      newHappiness = clamp(character.happiness + adjustedHappiness, 0, 100);
     }
 
     // --- Flag changes ---
@@ -995,8 +1201,9 @@ export const useGameStore = create<GameStore>()((set, get) => ({
   // ----- Club actions ------------------------------------------------------
 
   joinClub: (clubId) => {
-    const { clubs } = get();
+    const { clubs, ngplus } = get();
     if (clubs.some((c) => c.clubId === clubId)) return;
+    if (clubs.length >= ngplus.clubLimit) return;
     const newClub: ClubMembership = {
       clubId,
       role: 'member',
@@ -1058,7 +1265,195 @@ export const useGameStore = create<GameStore>()((set, get) => ({
 
   hasSave: () => localStorage.getItem(SAVE_KEY) !== null,
 
-  newGame: () => set(initialState),
+  newGame: () => {
+    const { ngplus } = get();
+    set({
+      ...initialState,
+      ngplus: {
+        ...initialState.ngplus,
+        playthrough: ngplus.playthrough,
+        unlockedTalents: ngplus.unlockedTalents,
+        unlockedAchievements: ngplus.unlockedAchievements,
+        completedEndings: ngplus.completedEndings,
+        unlockedSkins: ngplus.unlockedSkins,
+        achievementPoints: ngplus.achievementPoints,
+      },
+    });
+  },
+
+  resetFullGame: () => set(initialState),
+
+  // ----- NG+ actions -------------------------------------------------------
+
+  selectTalent: (talentId) => {
+    const { ngplus } = get();
+    const talentData = talents.find((t) => t.id === talentId);
+    if (!talentData) return;
+    if (!ngplus.isNGPlus) return; // talents only available in NG+
+    set({
+      ngplus: {
+        ...ngplus,
+        selectedTalent: talentId,
+        unlockedTalents: ngplus.unlockedTalents.includes(talentId)
+          ? ngplus.unlockedTalents
+          : [...ngplus.unlockedTalents, talentId],
+      },
+    });
+  },
+
+  unlockAchievement: (achievementId) => {
+    const { ngplus } = get();
+    if (ngplus.unlockedAchievements.includes(achievementId)) return;
+    const achievementData = achievements.find((a) => a.id === achievementId);
+    if (!achievementData) return;
+    const points = ACHIEVEMENT_POINTS[achievementId] ?? 10;
+    set({
+      ngplus: {
+        ...ngplus,
+        unlockedAchievements: [...ngplus.unlockedAchievements, achievementId],
+        achievementPoints: ngplus.achievementPoints + points,
+      },
+    });
+  },
+
+  unlockSkin: (skinId) => {
+    const { ngplus } = get();
+    if (ngplus.unlockedSkins.includes(skinId)) return;
+    const skinData = skins.find((s) => s.id === skinId);
+    if (!skinData) return;
+    if (ngplus.achievementPoints < skinData.cost) return;
+    set({
+      ngplus: {
+        ...ngplus,
+        unlockedSkins: [...ngplus.unlockedSkins, skinId],
+        achievementPoints: ngplus.achievementPoints - skinData.cost,
+      },
+    });
+  },
+
+  setActiveSkin: (skinId) => {
+    const { ngplus } = get();
+    if (!ngplus.unlockedSkins.includes(skinId)) return;
+    set({
+      ngplus: {
+        ...ngplus,
+        activeSkin: skinId,
+      },
+    });
+  },
+
+  startNGPlus: () => {
+    const state = get();
+    const { ngplus, character } = state;
+
+    // 1. Calculate inheritance rate based on unlocked achievements
+    const nextPlaythrough = ngplus.playthrough + 1;
+    const inheritanceRate = calculateInheritanceRate(ngplus.unlockedAchievements);
+
+    // 2. Save current character stats as inheritedStats (multiplied by inheritance rate, rounded)
+    const inheritedStats: StatBlock = {
+      intelligence: Math.round(character.stats.intelligence * inheritanceRate),
+      charisma: Math.round(character.stats.charisma * inheritanceRate),
+      athleticism: Math.round(character.stats.athleticism * inheritanceRate),
+      creativity: Math.round(character.stats.creativity * inheritanceRate),
+      diligence: Math.round(character.stats.diligence * inheritanceRate),
+      luck: Math.round(character.stats.luck * inheritanceRate),
+    };
+
+    // 3. Get NG+ config for next playthrough
+    const config = getNGPlusConfig(nextPlaythrough, ngplus.unlockedAchievements);
+
+    // 4. Determine talent: allow talent selection for NG+ playthroughs
+    let selectedTalent: string | null = null;
+    if (nextPlaythrough >= 3) {
+      // Allow talent selection - player will choose via selectTalent action
+      selectedTalent = null;
+    } else {
+      // Random talent from available talents
+      const availableTalents = talents;
+      if (availableTalents.length > 0) {
+        selectedTalent =
+          availableTalents[Math.floor(Math.random() * availableTalents.length)].id;
+      }
+    }
+
+    // 5. Reset game state but keep ngplus data, apply NG+ config
+    set({
+      ...initialState,
+      character: {
+        ...initialState.character,
+        stats: { ...DEFAULT_STATS },
+      },
+      ngplus: {
+        ...initialState.ngplus,
+        playthrough: nextPlaythrough,
+        isNGPlus: true,
+        isFreeMode: config.isFreeMode,
+        selectedTalent,
+        unlockedTalents: ngplus.unlockedTalents,
+        unlockedAchievements: ngplus.unlockedAchievements,
+        completedEndings: ngplus.completedEndings,
+        unlockedSkins: ngplus.unlockedSkins,
+        achievementPoints: ngplus.achievementPoints,
+        activeSkin: ngplus.activeSkin,
+        clubLimit: config.clubLimit,
+        negativeEventReduction: config.negativeEventReduction,
+        studyEfficiencyBonus: config.studyEfficiencyBonus,
+        inheritedStats,
+      },
+      gamePhase: 'creating',
+    });
+  },
+
+  checkAchievements: () => {
+    const state = get();
+    const checkState = {
+      stats: { ...state.character.stats } as Record<string, number>,
+      gpa: state.character.gpa,
+      relationships: state.relationships.map((r) => ({
+        npcId: r.npcId,
+        trust: r.trust,
+        romance: r.romance,
+      })),
+      clubs: state.clubs.map((c) => ({
+        clubId: c.clubId,
+        skill: c.skill,
+        role: c.role,
+      })),
+      academics: state.academics.map((a) => ({
+        subjectId: a.subjectId,
+        mastery: a.mastery,
+      })),
+      flags: [...state.flags],
+      completedEndings: [...state.ngplus.completedEndings],
+      playthrough: state.ngplus.playthrough,
+      happiness: state.character.happiness,
+      stress: state.character.stress,
+      romanceState: { partnerId: state.romanceState.partnerId, datingLevel: state.romanceState.datingLevel },
+      eventLog: [...state.eventLog],
+    };
+
+    const newUnlocked = [...state.ngplus.unlockedAchievements];
+    let newPoints = state.ngplus.achievementPoints;
+
+    for (const achievement of achievements) {
+      if (newUnlocked.includes(achievement.id)) continue;
+      if (checkAchievementCondition(achievement.id, checkState)) {
+        newUnlocked.push(achievement.id);
+        newPoints += ACHIEVEMENT_POINTS[achievement.id] ?? 10;
+      }
+    }
+
+    if (newUnlocked.length !== state.ngplus.unlockedAchievements.length) {
+      set({
+        ngplus: {
+          ...state.ngplus,
+          unlockedAchievements: newUnlocked,
+          achievementPoints: newPoints,
+        },
+      });
+    }
+  },
 
   // ----- Phase management --------------------------------------------------
 

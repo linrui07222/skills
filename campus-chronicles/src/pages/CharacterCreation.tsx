@@ -1,10 +1,11 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Brain, MessageCircle, Dumbbell, Palette, Target, Clover, ChevronLeft, ChevronRight, Play } from 'lucide-react';
 import { useGameStore } from '@/store/gameStore';
 import { difficultyPresets } from '@/data/difficulty';
 import { identities } from '@/data/identities';
+import { talents } from '@/data/talents';
 
 const STAT_CONFIG = [
   { key: 'intelligence', label: '智力', icon: Brain, color: 'text-blue-500' },
@@ -19,12 +20,18 @@ const BONUS_POINTS = 15;
 
 export default function CharacterCreation() {
   const [step, setStep] = useState(0);
+  const [talentRevealed, setTalentRevealed] = useState(false);
   const navigate = useNavigate();
-  const { character, setCharacterName, setIdentity, allocateStat, setDifficulty, startGame } = useGameStore();
+  const { character, setCharacterName, setIdentity, allocateStat, setDifficulty, startGame, ngplus, selectTalent } = useGameStore();
 
   const selectedIdentity = useMemo(
     () => identities.find((i) => i.id === character.identity),
     [character.identity],
+  );
+
+  const selectedTalentData = useMemo(
+    () => talents.find((t) => t.id === ngplus.selectedTalent),
+    [ngplus.selectedTalent],
   );
 
   const usedPoints = useMemo(() => {
@@ -34,10 +41,30 @@ export default function CharacterCreation() {
 
   const remaining = BONUS_POINTS - usedPoints;
 
-  const canNext = step === 0 ? character.name.trim().length > 0 && !!character.identity : step === 1 ? remaining >= 0 : !!character.difficulty;
+  // Steps: 0=identity, 1=stats, 2=talent(NG+ only), 3=difficulty
+  const hasTalentStep = ngplus.isNGPlus;
+  const totalSteps = hasTalentStep ? 3 : 2;
+  const talentStepIndex = 2;
+  const difficultyStepIndex = hasTalentStep ? 3 : 2;
+
+  const canNext = step === 0
+    ? character.name.trim().length > 0 && !!character.identity
+    : step === 1
+      ? remaining >= 0
+      : step === talentStepIndex
+        ? !!ngplus.selectedTalent
+        : !!character.difficulty;
+
+  // Auto-reveal talent for playthrough 2
+  useEffect(() => {
+    if (step === talentStepIndex && ngplus.isNGPlus && ngplus.playthrough === 2 && ngplus.selectedTalent) {
+      const timer = setTimeout(() => setTalentRevealed(true), 800);
+      return () => clearTimeout(timer);
+    }
+  }, [step, ngplus.isNGPlus, ngplus.playthrough, ngplus.selectedTalent, talentStepIndex]);
 
   const handleNext = () => {
-    if (step < 2) setStep(step + 1);
+    if (step < totalSteps) setStep(step + 1);
     else { startGame(); navigate('/game'); }
   };
 
@@ -69,16 +96,27 @@ export default function CharacterCreation() {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-amber-50 to-orange-50 flex flex-col items-center p-4">
+      {/* NG+ Banner */}
+      {ngplus.isNGPlus && (
+        <motion.div
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="w-full max-w-lg mb-4 rounded-xl bg-gradient-to-r from-purple-600 to-indigo-600 px-4 py-2.5 text-center text-white font-bold shadow-lg"
+        >
+          🔄 第{ngplus.playthrough}周目
+        </motion.div>
+      )}
+
       {/* Progress dots */}
-      <div className="flex gap-3 mt-6 mb-8">
-        {[0, 1, 2].map((i) => (
+      <div className="flex gap-3 mt-2 mb-6">
+        {Array.from({ length: totalSteps + 1 }).map((_, i) => (
           <div key={i} className={`w-3 h-3 rounded-full transition-colors ${i <= step ? 'bg-orange-500' : 'bg-orange-200'}`} />
         ))}
       </div>
 
       <AnimatePresence mode="wait">
         <motion.div key={step} initial={{ opacity: 0, x: 40 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -40 }} transition={{ duration: 0.25 }} className="w-full max-w-lg">
-          {/* Step 1: Identity */}
+          {/* Step 0: Identity */}
           {step === 0 && (
             <div className="bg-white rounded-2xl shadow-lg p-6 space-y-6">
               <h2 className="text-xl font-bold text-center text-gray-800">你是谁？</h2>
@@ -103,7 +141,6 @@ export default function CharacterCreation() {
                   ))}
                 </div>
               </div>
-              {/* Identity preview */}
               {selectedIdentity && (
                 <div className="bg-orange-50 rounded-xl p-4 space-y-2 border border-orange-200">
                   <div className="flex items-center gap-2">
@@ -139,7 +176,7 @@ export default function CharacterCreation() {
             </div>
           )}
 
-          {/* Step 2: Stats & Traits */}
+          {/* Step 1: Stats */}
           {step === 1 && (
             <div className="bg-white rounded-2xl shadow-lg p-6 space-y-4">
               <div className="flex justify-between items-center">
@@ -151,9 +188,20 @@ export default function CharacterCreation() {
                   身份「{selectedIdentity.name}」加成：{formatStatBonuses(selectedIdentity.statBonuses)}
                 </div>
               )}
+              {/* Inherited stats preview */}
+              {ngplus.inheritedStats && (
+                <div className="text-xs text-purple-700 bg-purple-50 rounded-lg px-3 py-2 border border-purple-200">
+                  <span className="font-semibold">🔄 继承属性：</span>
+                  {Object.entries(ngplus.inheritedStats).filter(([, v]) => v > 0).map(([k, v]) => {
+                    const cfg = STAT_CONFIG.find((s) => s.key === k);
+                    return cfg ? `${cfg.label}+${v}` : '';
+                  }).filter(Boolean).join('、')}
+                </div>
+              )}
               <div className="space-y-3">
                 {STAT_CONFIG.map(({ key, label, icon: Icon, color }) => {
                   const bonus = selectedIdentity?.statBonuses[key] ?? 0;
+                  const inherited = ngplus.inheritedStats?.[key] ?? 0;
                   return (
                     <div key={key} className="flex items-center gap-3">
                       <Icon className={`w-5 h-5 ${color} shrink-0`} />
@@ -161,11 +209,11 @@ export default function CharacterCreation() {
                       <input type="range" min={1} max={20} value={character.stats[key]} onChange={(e) => handleSlider(key, +e.target.value)} className="flex-1 accent-orange-500" />
                       <span className="w-6 text-center text-sm font-mono text-gray-800">{character.stats[key]}</span>
                       {bonus > 0 && <span className="text-xs font-medium text-orange-500">+{bonus}</span>}
+                      {inherited > 0 && <span className="text-xs font-medium text-purple-500">+{inherited}🔄</span>}
                     </div>
                   );
                 })}
               </div>
-              {/* Simple radar chart */}
               <div className="flex justify-center">
                 <svg viewBox="0 0 100 100" className="w-40 h-40">
                   <polygon points="50,10 86.6,30 86.6,70 50,90 13.4,70 13.4,30" fill="none" stroke="#fed7aa" strokeWidth="0.5" />
@@ -176,8 +224,77 @@ export default function CharacterCreation() {
             </div>
           )}
 
-          {/* Step 3: Difficulty */}
-          {step === 2 && (
+          {/* Step 2: Talent (NG+ only) */}
+          {step === talentStepIndex && ngplus.isNGPlus && (
+            <div className="bg-white rounded-2xl shadow-lg p-6 space-y-4">
+              <h2 className="text-xl font-bold text-center text-gray-800">天赋选择</h2>
+              {/* Playthrough 2: random talent with reveal animation */}
+              {ngplus.playthrough === 2 && ngplus.selectedTalent && (
+                <div className="flex flex-col items-center gap-4 py-6">
+                  <p className="text-sm text-gray-600">前世的记忆赋予了你一项天赋……</p>
+                  <motion.div
+                    className="w-40 h-40 rounded-2xl bg-gradient-to-br from-purple-100 to-indigo-100 border-2 border-purple-300 flex flex-col items-center justify-center cursor-pointer shadow-lg"
+                    initial={{ rotateY: 180 }}
+                    animate={{ rotateY: talentRevealed ? 0 : 180 }}
+                    transition={{ duration: 0.6 }}
+                    onClick={() => setTalentRevealed(true)}
+                  >
+                    {talentRevealed && selectedTalentData ? (
+                      <>
+                        <span className="text-4xl">{selectedTalentData.emoji}</span>
+                        <span className="mt-2 font-bold text-purple-800">{selectedTalentData.name}</span>
+                        <span className="text-xs text-purple-600 mt-1 text-center px-2">{selectedTalentData.effect}</span>
+                      </>
+                    ) : (
+                      <span className="text-4xl">❓</span>
+                    )}
+                  </motion.div>
+                  {talentRevealed && selectedTalentData && (
+                    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-center">
+                      <p className="text-sm text-gray-700">{selectedTalentData.description}</p>
+                    </motion.div>
+                  )}
+                </div>
+              )}
+              {/* Playthrough 3+: talent selection */}
+              {ngplus.playthrough >= 3 && (
+                <div className="space-y-3">
+                  <p className="text-sm text-gray-600 text-center">选择一项前世觉醒的天赋</p>
+                  <div className="grid grid-cols-1 gap-2">
+                    {talents.map((talent) => (
+                      <button
+                        key={talent.id}
+                        onClick={() => selectTalent(talent.id)}
+                        className={`flex items-center gap-3 p-3 rounded-xl border-2 transition-all text-left ${
+                          ngplus.selectedTalent === talent.id
+                            ? 'border-purple-500 bg-purple-50'
+                            : 'border-gray-200 hover:border-purple-300'
+                        }`}
+                      >
+                        <span className="text-2xl">{talent.emoji}</span>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-bold text-gray-800">{talent.name}</p>
+                          <p className="text-xs text-gray-500">{talent.description}</p>
+                          <p className="text-xs text-purple-600 font-medium">{talent.effect}</p>
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+              {/* NG+ Benefits Summary */}
+              <div className="bg-purple-50 rounded-xl p-3 border border-purple-200 text-xs text-purple-700 space-y-1">
+                <p className="font-semibold">🔄 二周目加成</p>
+                <p>• 社团上限：{ngplus.clubLimit}个</p>
+                <p>• 学习效率加成：+{Math.round(ngplus.studyEfficiencyBonus * 100)}%</p>
+                <p>• 负面事件减免：{Math.round(ngplus.negativeEventReduction * 100)}%</p>
+                {ngplus.isFreeMode && <p>• 🕊️ 自由模式：无限制！</p>}
+              </div>
+            </div>
+          )}
+
+          {/* Step 3 (or 2): Difficulty */}
+          {step === difficultyStepIndex && (
             <div className="space-y-4">
               <h2 className="text-xl font-bold text-center text-gray-800">选择难度</h2>
               {difficultyPresets.map((d) => (
@@ -204,7 +321,7 @@ export default function CharacterCreation() {
           </button>
         )}
         <button onClick={handleNext} disabled={!canNext} className="flex items-center gap-1 px-5 py-2 rounded-xl bg-orange-500 text-white hover:bg-orange-600 disabled:opacity-40 disabled:cursor-not-allowed transition-colors">
-          {step === 2 ? (<><Play className="w-4 h-4" /> 开始游戏</>) : (<>下一步 <ChevronRight className="w-4 h-4" /></>)}
+          {step === totalSteps ? (<><Play className="w-4 h-4" /> 开始游戏</>) : (<>下一步 <ChevronRight className="w-4 h-4" /></>)}
         </button>
       </div>
     </div>

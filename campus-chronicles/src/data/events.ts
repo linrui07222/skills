@@ -832,4 +832,148 @@ export const events: GameEvent[] = [
     ],
     category: 'milestone',
   },
+
+  // ── NG+ Exclusive Events (二周目专属) ──────────────────────
+  {
+    id: 'evt-ngplus-dejavu',
+    title: '既视感',
+    description: '踏入校门的那一刻，一阵强烈的既视感涌上心头。这些走廊、这些面孔……你似乎隐约记得发生过什么。一些遗憾，一些错过。这一次，你会做出不同的选择吗？',
+    icon: 'RotateCcw',
+    triggerCondition: { year: [1], week: [1], flags: ['ngplus-active'] },
+    choices: [
+      {
+        text: '追寻模糊的记忆，主动去找那个曾经错过的人',
+        consequences: { stats: { charisma: 2 }, happiness: 3, flags: ['ngplus-chase-memory'] },
+      },
+      {
+        text: '优先报名上次错过的社团',
+        consequences: { stats: { diligence: 2 }, happiness: 2, flags: ['ngplus-club-priority'] },
+      },
+      {
+        text: '这次要更加努力，不再留有遗憾',
+        consequences: { stats: { intelligence: 2, diligence: 1 }, flags: ['ngplus-no-regrets'] },
+      },
+    ],
+    category: 'milestone',
+  },
+  {
+    id: 'evt-ngplus-old-friend',
+    title: '熟悉的陌生人',
+    description: '在食堂里，你看到一个似曾相识的身影。虽然你们从未说过话，但你的内心深处似乎记得这个人很重要。一种奇妙的亲切感涌上来。',
+    icon: 'Users',
+    triggerCondition: { year: [1], week: [2, 3], flags: ['ngplus-active'], randomChance: 0.8 },
+    choices: [
+      {
+        text: '鼓起勇气，主动坐到ta旁边',
+        consequences: { stats: { charisma: 2 }, happiness: 2, flags: ['ngplus-early-friend'] },
+      },
+      {
+        text: '远远地观察，等待自然的时机',
+        consequences: { stats: { intelligence: 1, diligence: 1 }, flags: ['ngplus-cautious'] },
+      },
+      {
+        text: '写一张小纸条偷偷塞进ta的储物柜',
+        consequences: { stats: { creativity: 2 }, happiness: 1, flags: ['ngplus-secret-note'] },
+      },
+    ],
+    category: 'social',
+  },
+  {
+    id: 'evt-ngplus-teacher-wisdom',
+    title: '老师的深意',
+    description: '课后，老师叫住了你。"我总觉得你比其他同学更……成熟。像是经历过什么一样。"老师意味深长地看着你，"好好珍惜这次机会。"',
+    icon: 'GraduationCap',
+    triggerCondition: { year: [1], week: [5, 6], flags: ['ngplus-active'], randomChance: 0.5 },
+    choices: [
+      {
+        text: '虚心请教，请老师多加指导',
+        consequences: { stats: { intelligence: 2, diligence: 1 }, happiness: 1, flags: ['ngplus-teacher-guide'] },
+      },
+      {
+        text: '微笑不语，把这份感悟藏在心里',
+        consequences: { stats: { creativity: 1, charisma: 1 }, happiness: 2 },
+      },
+    ],
+    category: 'academic',
+  },
+  {
+    id: 'evt-ngplus-make-amends',
+    title: '弥补遗憾',
+    description: '你想起上次和某个朋友闹翻的场景。这一次，你看到了相同的导火索正在酝酿。你可以选择同样的路，也可以做出不同的选择。',
+    icon: 'HeartHandshake',
+    triggerCondition: { year: [1, 2], week: [8, 15, 22], flags: ['ngplus-active'], randomChance: 0.4 },
+    choices: [
+      {
+        text: '主动道歉，即使你觉得不是自己的错',
+        consequences: { stats: { charisma: 2 }, happiness: 2, stress: -1, flags: ['ngplus-made-amends'] },
+      },
+      {
+        text: '这次要更坦诚地表达自己的感受',
+        consequences: { stats: { charisma: 1, creativity: 1 }, happiness: 1, flags: ['ngplus-honest'] },
+      },
+      {
+        text: '保持距离，避免冲突',
+        consequences: { stats: { diligence: 1 }, stress: 1 },
+      },
+    ],
+    category: 'social',
+  },
+  {
+    id: 'evt-ngplus-second-chance',
+    title: '第二次机会',
+    description: '考试前夜，你突然想起了上次的失败——那些没复习到的知识点，那道差一点就做对的题。这一次，你有了预感。你可以改变结果。',
+    icon: 'Sparkles',
+    triggerCondition: { year: [1, 2], week: [10, 20, 30], flags: ['ngplus-active'], randomChance: 0.5 },
+    choices: [
+      {
+        text: '重点复习上次失分的知识点',
+        consequences: { stats: { intelligence: 3, diligence: 1 }, energy: -2, flags: ['ngplus-exam-prep'] },
+      },
+      {
+        text: '这次放轻松，相信自己的积累',
+        consequences: { stats: { charisma: 1 }, happiness: 2, stress: -2 },
+      },
+    ],
+    category: 'academic',
+  },
+  {
+    id: 'evt-ngplus-parallel-world',
+    title: '平行世界',
+    description: '一个雨天的下午，你在图书馆的角落发现了一本旧日记。翻开一看，里面写的故事竟然和你的人生如出一辙——但结局完全不同。最后一页写着："如果你正在读这段话，说明你还有机会。"',
+    icon: 'BookOpen',
+    triggerCondition: { year: [2, 3], week: [15, 25], flags: ['ngplus-active'], randomChance: 0.3 },
+    choices: [
+      {
+        text: '把日记带走，仔细研究每一个细节',
+        consequences: { stats: { intelligence: 2, creativity: 2 }, happiness: 1, flags: ['ngplus-parallel-diary'] },
+      },
+      {
+        text: '放回原处，有些东西不该被打扰',
+        consequences: { stats: { diligence: 2 }, happiness: -1 },
+      },
+      {
+        text: '在最后一页写下你自己的话——给下一个读者',
+        consequences: { stats: { creativity: 3, charisma: 1 }, happiness: 2, flags: ['ngplus-diary-writer'] },
+      },
+    ],
+    category: 'random',
+  },
+  {
+    id: 'evt-ngplus-perfect-youth',
+    title: '完美青春',
+    description: '站在毕业典礼的舞台上，你回望这四年。每一段友谊都得到了珍惜，每一个机会都被把握，每一次遗憾都被弥补。你知道，这就是你一直在寻找的——完美青春。',
+    icon: 'Crown',
+    triggerCondition: { year: [3], week: [39, 40], flags: ['ngplus-active', 'ngplus-no-regrets'] },
+    choices: [
+      {
+        text: '含泪微笑，感谢这段重来的青春',
+        consequences: { stats: { charisma: 3 }, happiness: 5, stress: -5, flags: ['ngplus-perfect-youth-ending'] },
+      },
+      {
+        text: '在毕业演讲中分享你的感悟',
+        consequences: { stats: { charisma: 2, intelligence: 2 }, happiness: 3, flags: ['ngplus-valedictorian-speech'] },
+      },
+    ],
+    category: 'milestone',
+  },
 ];

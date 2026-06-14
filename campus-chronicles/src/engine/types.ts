@@ -171,6 +171,22 @@ export interface GameState {
   gamePhase: 'menu' | 'creating' | 'playing' | 'event' | 'exam' | 'ending';
   endingType: string | null;
   notifications: { id: string; text: string; type: 'positive' | 'negative' | 'neutral' }[];
+  ngplus: {
+    playthrough: number;           // current playthrough (1, 2, 3, 4+)
+    isNGPlus: boolean;             // is this a NG+ playthrough
+    isFreeMode: boolean;           // free mode (4th playthrough+)
+    selectedTalent: string | null; // talent selected for this playthrough
+    unlockedTalents: string[];     // all talents ever unlocked (persists)
+    unlockedAchievements: string[];// all achievements ever unlocked (persists)
+    completedEndings: string[];    // all endings seen (persists)
+    unlockedSkins: string[];       // cosmetic skins unlocked (persists)
+    activeSkin: string;            // currently active skin id
+    achievementPoints: number;     // currency for buying skins
+    clubLimit: number;             // max clubs joinable
+    negativeEventReduction: number;// reduction in negative events for NG+
+    studyEfficiencyBonus: number;  // study efficiency bonus for NG+
+    inheritedStats: StatBlock | null; // stats inherited from previous playthrough
+  };
 }
 
 // ---------------------------------------------------------------------------

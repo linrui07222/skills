@@ -6,10 +6,13 @@ import { subjects } from '@/data/subjects';
 import { clubs } from '@/data/clubs';
 import { npcs } from '@/data/npcs';
 import { identities } from '@/data/identities';
+import { talents } from '@/data/talents';
 import { events } from '@/data/events';
 import EventDialog from '@/components/EventDialog';
 import CharacterPanel from '@/components/CharacterPanel';
 import SchedulePlanner from '@/components/SchedulePlanner';
+import AchievementPanel from '@/components/AchievementPanel';
+import ShopPanel from '@/components/ShopPanel';
 import type { GameEvent } from '@/engine/types';
 
 // ── Constants ──────────────────────────────────────────────────────────────
@@ -18,7 +21,7 @@ const YEAR_LABELS = ['高一', '高二', '高三', '高三下'];
 const DAY_NAMES = ['周一', '周二', '周三', '周四', '周五', '周六', '周日'];
 const DATING_LABELS = ['暗恋', '暧昧', '交往中', '稳定交往', '热恋', '灵魂伴侣'];
 
-type LocationKey = 'classroom' | 'library' | 'cafeteria' | 'gym' | 'club' | 'home' | 'schedule' | 'profile' | 'romance';
+type LocationKey = 'classroom' | 'library' | 'cafeteria' | 'gym' | 'club' | 'home' | 'schedule' | 'profile' | 'romance' | 'achievement' | 'shop';
 
 const LOCATIONS: { key: LocationKey; icon: string; name: string; desc: string }[] = [
   { key: 'classroom', icon: '🏫', name: '教室', desc: '上课学习' },
@@ -30,6 +33,8 @@ const LOCATIONS: { key: LocationKey; icon: string; name: string; desc: string }[
   { key: 'romance', icon: '💕', name: '恋爱', desc: '表白、约会' },
   { key: 'schedule', icon: '📋', name: '课程表', desc: '规划你的一周' },
   { key: 'profile', icon: '👤', name: '个人资料', desc: '查看你的属性' },
+  { key: 'achievement', icon: '🏆', name: '成就', desc: '查看成就' },
+  { key: 'shop', icon: '🛍️', name: '商店', desc: '装扮商店' },
 ];
 
 // ── Event checking logic ──────────────────────────────────────────────────
@@ -400,10 +405,13 @@ function NotificationToasts() {
     }
   }, [notifications, removeNotification]);
 
+  // Limit to 5, auto-remove oldest from bottom
+  const visible = notifications.slice(-5);
+
   return (
     <div className="fixed top-14 right-4 z-30 flex flex-col gap-1.5 max-w-xs">
       <AnimatePresence>
-        {notifications.slice(-5).map((n) => (
+        {visible.map((n) => (
           <motion.div
             key={n.id}
             initial={{ opacity: 0, x: 60 }}
@@ -434,12 +442,16 @@ export default function GameHub() {
   const saveGame = useGameStore((s) => s.saveGame);
   const setCurrentEvent = useGameStore((s) => s.setCurrentEvent);
   const addNotification = useGameStore((s) => s.addNotification);
+  const ngplus = useGameStore((s) => s.ngplus);
 
   const [activeLocation, setActiveLocation] = useState<LocationKey | null>(null);
   const [showProfile, setShowProfile] = useState(false);
   const [showSchedule, setShowSchedule] = useState(false);
+  const [showAchievement, setShowAchievement] = useState(false);
+  const [showShop, setShowShop] = useState(false);
 
   const identityData = identities.find((i) => i.id === character.identity);
+  const talentData = ngplus.selectedTalent ? talents.find((t) => t.id === ngplus.selectedTalent) : null;
 
   // Check for ending condition
   useEffect(() => {
@@ -479,6 +491,8 @@ export default function GameHub() {
   const handleLocationClick = (key: LocationKey) => {
     if (key === 'schedule') { setShowSchedule(true); return; }
     if (key === 'profile') { setShowProfile(true); return; }
+    if (key === 'achievement') { setShowAchievement(true); return; }
+    if (key === 'shop') { setShowShop(true); return; }
     setActiveLocation(activeLocation === key ? null : key);
   };
 
@@ -491,6 +505,11 @@ export default function GameHub() {
       {/* ── Top Bar ─────────────────────────────────────────── */}
       <header className="bg-slate-900 text-amber-50 px-4 py-2.5 flex items-center justify-between flex-wrap gap-2 shadow-lg">
         <div className="flex items-center gap-3 text-sm">
+          {ngplus.isNGPlus && (
+            <span className="bg-gradient-to-r from-purple-600 to-indigo-600 rounded-full px-2 py-0.5 text-[10px] font-bold">
+              第{ngplus.playthrough}周目
+            </span>
+          )}
           <span className="font-bold font-display">{yearLabel}</span>
           <span className="text-amber-300">第{character.week}周</span>
           <span className="text-amber-200">{dayName}</span>
@@ -498,6 +517,11 @@ export default function GameHub() {
           {identityData && (
             <span className="bg-slate-700 rounded-full px-2 py-0.5 text-[10px]">
               {identityData.emoji} {identityData.name}
+            </span>
+          )}
+          {talentData && (
+            <span className="bg-purple-700 rounded-full px-2 py-0.5 text-[10px]">
+              {talentData.emoji} {talentData.name}
             </span>
           )}
         </div>
@@ -596,6 +620,8 @@ export default function GameHub() {
       {currentEvent && <EventDialog />}
       <CharacterPanel open={showProfile} onClose={() => setShowProfile(false)} />
       <SchedulePlanner open={showSchedule} onClose={() => setShowSchedule(false)} />
+      <AchievementPanel open={showAchievement} onClose={() => setShowAchievement(false)} />
+      <ShopPanel open={showShop} onClose={() => setShowShop(false)} />
     </div>
   );
 }

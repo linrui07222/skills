@@ -25,9 +25,19 @@ export default function MainMenu() {
   const navigate = useNavigate();
   const loadGame = useGameStore((s) => s.loadGame);
   const hasSave = useGameStore((s) => s.hasSave);
+  const ngplus = useGameStore((s) => s.ngplus);
+  const startNGPlus = useGameStore((s) => s.startNGPlus);
+
+  const hasCompletedGame = ngplus.completedEndings.length > 0;
+  const playthrough = ngplus.playthrough;
 
   const handleContinue = () => {
     if (loadGame()) navigate('/game');
+  };
+
+  const handleNGPlus = () => {
+    startNGPlus();
+    navigate('/create');
   };
 
   return (
@@ -94,8 +104,28 @@ export default function MainMenu() {
           <RotateCcw size={18} /> 继续游戏
         </motion.button>
 
+        {hasCompletedGame && (
+          <motion.button
+            custom={2}
+            variants={btnVariants}
+            initial="hidden"
+            animate="visible"
+            whileHover={{ y: -3, scale: 1.03 }}
+            whileTap={{ scale: 0.97 }}
+            onClick={handleNGPlus}
+            className="relative flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-purple-600 to-indigo-600 px-6 py-3 text-base font-display font-bold text-white shadow-lg hover:from-purple-500 hover:to-indigo-500 transition-colors"
+          >
+            🔄 二周目
+            {playthrough > 1 && (
+              <span className="absolute -top-2 -right-2 bg-amber-400 text-slate-900 text-[10px] font-bold rounded-full w-5 h-5 flex items-center justify-center">
+                {playthrough}
+              </span>
+            )}
+          </motion.button>
+        )}
+
         <motion.button
-          custom={2}
+          custom={hasCompletedGame ? 3 : 2}
           variants={btnVariants}
           initial="hidden"
           animate="visible"
