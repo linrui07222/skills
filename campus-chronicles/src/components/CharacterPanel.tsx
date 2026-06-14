@@ -13,12 +13,12 @@ const STAT_COLORS: Record<string, string> = {
 };
 
 const STAT_LABELS: Record<string, string> = {
-  intelligence: 'Intelligence',
-  charisma: 'Charisma',
-  athleticism: 'Athleticism',
-  creativity: 'Creativity',
-  diligence: 'Diligence',
-  luck: 'Luck',
+  intelligence: '智力',
+  charisma: '魅力',
+  athleticism: '运动',
+  creativity: '创造力',
+  diligence: '勤奋',
+  luck: '运气',
 };
 
 interface Props {
@@ -47,13 +47,13 @@ export default function CharacterPanel({ open, onClose }: Props) {
           onClick={onClose}
           className="mb-4 text-sm font-medium text-navy-600 hover:text-navy-900"
         >
-          ✕ Close
+          ✕ 关闭
         </button>
 
         {/* Name & portrait */}
         <div className="text-center mb-5">
           <div className="text-5xl mb-1">{character.appearance || '🧑‍🎓'}</div>
-          <h2 className="text-lg font-bold text-navy-900">{character.name || 'Student'}</h2>
+          <h2 className="text-lg font-bold text-navy-900">{character.name || '学生'}</h2>
           <p className="text-xs text-navy-600">GPA: {character.gpa.toFixed(1)}</p>
         </div>
 
@@ -77,13 +77,13 @@ export default function CharacterPanel({ open, onClose }: Props) {
 
         {/* Energy / Stress / Happiness */}
         <div className="space-y-2 mb-5">
-          <MeterBar label="Energy" value={character.energy} max={character.maxEnergy} color="bg-emerald-500" />
-          <MeterBar label="Stress" value={character.stress} max={100} color="bg-orange-500" />
-          <MeterBar label="Happiness" value={character.happiness} max={100} color="bg-yellow-400" />
+          <MeterBar label="精力" value={character.energy} max={character.maxEnergy} color="bg-emerald-500" />
+          <MeterBar label="压力" value={character.stress} max={100} color="bg-orange-500" />
+          <MeterBar label="幸福感" value={character.happiness} max={100} color="bg-yellow-400" />
         </div>
 
         {/* Academic record */}
-        <h3 className="text-sm font-bold text-navy-800 mb-2">Academics</h3>
+        <h3 className="text-sm font-bold text-navy-800 mb-2">学业</h3>
         <div className="space-y-1.5 mb-5">
           {academics.map((a) => {
             const sub = subjects.find((s) => s.id === a.subjectId);
@@ -105,9 +105,9 @@ export default function CharacterPanel({ open, onClose }: Props) {
         </div>
 
         {/* Clubs */}
-        <h3 className="text-sm font-bold text-navy-800 mb-2">Clubs</h3>
+        <h3 className="text-sm font-bold text-navy-800 mb-2">社团</h3>
         {clubMemberships.length === 0 && (
-          <p className="text-xs text-navy-500">No clubs joined yet.</p>
+          <p className="text-xs text-navy-500">还没有加入社团。</p>
         )}
         <div className="space-y-1.5">
           {clubMemberships.map((c) => {

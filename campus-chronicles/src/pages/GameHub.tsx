@@ -13,20 +13,20 @@ import type { GameEvent } from '@/engine/types';
 
 // ── Constants ──────────────────────────────────────────────────────────────
 
-const YEAR_LABELS = ['Freshman', 'Sophomore', 'Junior', 'Senior'];
-const DAY_NAMES = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+const YEAR_LABELS = ['高一', '高二', '高三', '高三下'];
+const DAY_NAMES = ['周一', '周二', '周三', '周四', '周五', '周六', '周日'];
 
 type LocationKey = 'classroom' | 'library' | 'cafeteria' | 'gym' | 'club' | 'home' | 'schedule' | 'profile';
 
 const LOCATIONS: { key: LocationKey; icon: string; name: string; desc: string }[] = [
-  { key: 'classroom', icon: '🏫', name: 'Classroom', desc: 'Attend classes and learn' },
-  { key: 'library', icon: '📚', name: 'Library', desc: 'Study and do homework' },
-  { key: 'cafeteria', icon: '🍽️', name: 'Cafeteria', desc: 'Socialize with classmates' },
-  { key: 'gym', icon: '⚽', name: 'Gym', desc: 'Exercise and PE class' },
-  { key: 'club', icon: '🎭', name: 'Club Room', desc: 'Extracurricular activities' },
-  { key: 'home', icon: '🏠', name: 'Home', desc: 'Rest and recharge' },
-  { key: 'schedule', icon: '📋', name: 'Schedule', desc: 'Plan your week' },
-  { key: 'profile', icon: '👤', name: 'Profile', desc: 'View your stats' },
+  { key: 'classroom', icon: '🏫', name: '教室', desc: '上课学习' },
+  { key: 'library', icon: '📚', name: '图书馆', desc: '学习和做作业' },
+  { key: 'cafeteria', icon: '🍽️', name: '食堂', desc: '与同学社交' },
+  { key: 'gym', icon: '⚽', name: '体育馆', desc: '锻炼和体育课' },
+  { key: 'club', icon: '🎭', name: '社团活动室', desc: '课外活动' },
+  { key: 'home', icon: '🏠', name: '家', desc: '休息和恢复' },
+  { key: 'schedule', icon: '📋', name: '课程表', desc: '规划你的一周' },
+  { key: 'profile', icon: '👤', name: '个人资料', desc: '查看你的属性' },
 ];
 
 // ── Event checking logic ──────────────────────────────────────────────────
@@ -93,8 +93,8 @@ function ClassroomPanel() {
   const energy = useGameStore((s) => s.character.energy);
   return (
     <div className="space-y-2">
-      <h3 className="text-sm font-bold text-slate-800">Attend Class</h3>
-      <p className="text-xs text-slate-600">Costs 15 energy per class.</p>
+      <h3 className="text-sm font-bold text-slate-800">上课</h3>
+      <p className="text-xs text-slate-600">每节课消耗15精力。</p>
       <div className="grid grid-cols-2 gap-1.5">
         {subjects.map((sub) => (
           <button
@@ -118,7 +118,7 @@ function LibraryPanel() {
   const energy = useGameStore((s) => s.character.energy);
   return (
     <div className="space-y-3">
-      <h3 className="text-sm font-bold text-slate-800">Library</h3>
+      <h3 className="text-sm font-bold text-slate-800">图书馆</h3>
       {academics.map((a) => {
         const sub = subjects.find((s) => s.id === a.subjectId);
         return (
@@ -130,14 +130,14 @@ function LibraryPanel() {
               onClick={() => study(a.subjectId)}
               className="rounded bg-blue-100 px-2 py-1 text-[10px] font-medium text-blue-800 border border-blue-300 hover:bg-blue-200 disabled:opacity-40"
             >
-              Study (20⚡)
+              学习 (20⚡)
             </button>
             <button
               disabled={energy < 10 || a.homeworkDone}
               onClick={() => doHomework(a.subjectId)}
               className="rounded bg-green-100 px-2 py-1 text-[10px] font-medium text-green-800 border border-green-300 hover:bg-green-200 disabled:opacity-40"
             >
-              {a.homeworkDone ? 'HW ✓' : 'HW (10⚡)'}
+              {a.homeworkDone ? '作业 ✓' : '作业 (10⚡)'}
             </button>
           </div>
         );
@@ -153,8 +153,8 @@ function CafeteriaPanel() {
   const classmates = npcs.filter((n) => n.type === 'classmate');
   return (
     <div className="space-y-2">
-      <h3 className="text-sm font-bold text-slate-800">Socialize</h3>
-      <p className="text-xs text-slate-600">Chat costs 10 energy, reduces stress.</p>
+      <h3 className="text-sm font-bold text-slate-800">社交</h3>
+      <p className="text-xs text-slate-600">聊天消耗10精力，减少压力。</p>
       <div className="grid grid-cols-2 gap-1.5">
         {classmates.map((npc) => {
           const rel = relationships.find((r) => r.npcId === npc.id);
@@ -184,20 +184,20 @@ function GymPanel() {
   const energy = useGameStore((s) => s.character.energy);
   return (
     <div className="space-y-2">
-      <h3 className="text-sm font-bold text-slate-800">Gym</h3>
+      <h3 className="text-sm font-bold text-slate-800">体育馆</h3>
       <button
         disabled={energy < 15}
         onClick={() => { updateStats({ athleticism: 2 }); updateEnergy(-15); updateStress(-5); }}
         className="w-full rounded-lg bg-red-100 px-3 py-2 text-xs font-medium text-red-800 border border-red-300 hover:bg-red-200 disabled:opacity-40"
       >
-        Exercise (+Athleticism, 15⚡)
+        锻炼 (+运动, 15⚡)
       </button>
       <button
         disabled={energy < 15}
         onClick={() => attendClass('pe')}
         className="w-full rounded-lg bg-orange-100 px-3 py-2 text-xs font-medium text-orange-800 border border-orange-300 hover:bg-orange-200 disabled:opacity-40"
       >
-        PE Class (15⚡)
+        体育课 (15⚡)
       </button>
     </div>
   );
@@ -212,8 +212,8 @@ function ClubPanel() {
   const available = clubs.filter((c) => !joined.includes(c.id));
   return (
     <div className="space-y-3">
-      <h3 className="text-sm font-bold text-slate-800">Clubs</h3>
-      {clubMemberships.length === 0 && <p className="text-xs text-slate-500">You haven't joined any clubs yet.</p>}
+      <h3 className="text-sm font-bold text-slate-800">社团</h3>
+      {clubMemberships.length === 0 && <p className="text-xs text-slate-500">你还没有加入任何社团。</p>}
       {clubMemberships.map((cm) => {
         const club = clubs.find((c) => c.id === cm.clubId);
         return (
@@ -225,14 +225,14 @@ function ClubPanel() {
               onClick={() => attendClub(cm.clubId)}
               className="rounded bg-pink-100 px-2 py-1 text-[10px] font-medium text-pink-800 border border-pink-300 hover:bg-pink-200 disabled:opacity-40"
             >
-              Attend (15⚡)
+              参加 (15⚡)
             </button>
           </div>
         );
       })}
       {available.length > 0 && (
         <>
-          <h4 className="text-xs font-semibold text-slate-700 mt-2">Join a Club</h4>
+          <h4 className="text-xs font-semibold text-slate-700 mt-2">加入社团</h4>
           <div className="grid grid-cols-2 gap-1.5">
             {available.map((club) => (
               <button
@@ -258,16 +258,16 @@ function HomePanel() {
   const pendingHw = academics.filter((a) => !a.homeworkDone);
   return (
     <div className="space-y-2">
-      <h3 className="text-sm font-bold text-slate-800">Home</h3>
+      <h3 className="text-sm font-bold text-slate-800">家</h3>
       <button
         onClick={rest}
         className="w-full rounded-lg bg-emerald-100 px-3 py-2 text-xs font-medium text-emerald-800 border border-emerald-300 hover:bg-emerald-200"
       >
-        Rest (+40⚡, -15 stress)
+        休息 (+40⚡, -15压力)
       </button>
       {pendingHw.length > 0 && (
         <div className="space-y-1">
-          <p className="text-xs text-slate-600">Pending homework:</p>
+          <p className="text-xs text-slate-600">待完成的作业：</p>
           {pendingHw.slice(0, 4).map((a) => {
             const sub = subjects.find((s) => s.id === a.subjectId);
             return (
@@ -277,7 +277,7 @@ function HomePanel() {
                 onClick={() => doHomework(a.subjectId)}
                 className="w-full rounded bg-green-100 px-2 py-1 text-[10px] font-medium text-green-800 border border-green-300 hover:bg-green-200 disabled:opacity-40"
               >
-                {sub?.name ?? a.subjectId} HW (10⚡)
+                {sub?.name ?? a.subjectId} 作业 (10⚡)
               </button>
             );
           })}
@@ -340,7 +340,7 @@ export default function GameHub() {
       const store = useGameStore.getState();
       const updatedPending = [...store.pendingEvents, ...newEvents];
       useGameStore.setState({ pendingEvents: updatedPending });
-      setNotification(`New event: ${newEvents[0].title}!`);
+      setNotification(`新事件：${newEvents[0].title}！`);
     }
 
     // Auto-save every 5 time slots
@@ -356,9 +356,9 @@ export default function GameHub() {
     setActiveLocation(activeLocation === key ? null : key);
   };
 
-  const yearLabel = YEAR_LABELS[Math.min(character.year - 1, 3)] ?? 'Freshman';
-  const dayName = DAY_NAMES[character.day] ?? 'Monday';
-  const slotLabel = character.currentSlot.charAt(0).toUpperCase() + character.currentSlot.slice(1);
+  const yearLabel = YEAR_LABELS[Math.min(character.year - 1, 3)] ?? '高一';
+  const dayName = DAY_NAMES[character.day] ?? '周一';
+  const slotLabel = character.currentSlot === 'morning' ? '上午' : character.currentSlot === 'afternoon' ? '下午' : '晚上';
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-amber-50 to-orange-50 flex flex-col">
@@ -366,7 +366,7 @@ export default function GameHub() {
       <header className="bg-slate-900 text-amber-50 px-4 py-2.5 flex items-center justify-between flex-wrap gap-2 shadow-lg">
         <div className="flex items-center gap-3 text-sm">
           <span className="font-bold font-display">{yearLabel}</span>
-          <span className="text-amber-300">Week {character.week}</span>
+          <span className="text-amber-300">第{character.week}周</span>
           <span className="text-amber-200">{dayName}</span>
           <span className="bg-amber-700 rounded-full px-2.5 py-0.5 text-xs font-semibold">{slotLabel}</span>
         </div>
@@ -432,7 +432,7 @@ export default function GameHub() {
                   onClick={() => setActiveLocation(null)}
                   className="text-xs text-slate-500 hover:text-slate-800 font-medium"
                 >
-                  ✕ Close
+                  ✕ 关闭
                 </button>
               </div>
               {activeLocation === 'classroom' && <ClassroomPanel />}
@@ -454,13 +454,13 @@ export default function GameHub() {
           onClick={handleAdvanceTime}
           className="rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-900 font-bold font-display px-6 py-2.5 text-sm transition-colors shadow-md"
         >
-          Advance Time
+          推进时间
         </motion.button>
         <button
-          onClick={() => { saveGame(); setNotification('Game saved!'); }}
+          onClick={() => { saveGame(); setNotification('游戏已保存！'); }}
           className="rounded-xl bg-amber-700 hover:bg-amber-600 text-amber-50 font-medium px-4 py-2.5 text-sm transition-colors"
         >
-          Save
+          保存
         </button>
       </footer>
 

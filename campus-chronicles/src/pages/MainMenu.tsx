@@ -53,7 +53,7 @@ export default function MainMenu() {
         animate={{ opacity: 1, scale: 1 }}
         transition={{ duration: 0.8, ease: 'easeOut' }}
       >
-        Campus Chronicles
+        校园物语
       </motion.h1>
 
       <motion.p
@@ -62,7 +62,7 @@ export default function MainMenu() {
         animate={{ opacity: 1 }}
         transition={{ delay: 0.5, duration: 0.6 }}
       >
-        Your High School Story Awaits
+        你的高中故事即将开始
       </motion.p>
 
       {/* Buttons */}
@@ -77,7 +77,7 @@ export default function MainMenu() {
           onClick={() => navigate('/create')}
           className="flex items-center justify-center gap-2 rounded-xl bg-amber-500 px-6 py-3 text-base font-display font-bold text-navy-900 shadow-lg hover:bg-amber-400 transition-colors"
         >
-          <Play size={18} /> New Game
+          <Play size={18} /> 新游戏
         </motion.button>
 
         <motion.button
@@ -91,7 +91,7 @@ export default function MainMenu() {
           disabled={!hasSave()}
           className="flex items-center justify-center gap-2 rounded-xl bg-amber-600 px-6 py-3 text-base font-display font-semibold text-amber-50 shadow-lg hover:bg-amber-500 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
         >
-          <RotateCcw size={18} /> Continue
+          <RotateCcw size={18} /> 继续游戏
         </motion.button>
 
         <motion.button
@@ -103,7 +103,7 @@ export default function MainMenu() {
           whileTap={{ scale: 0.97 }}
           className="flex items-center justify-center gap-2 rounded-xl bg-white/10 px-6 py-3 text-base font-display font-medium text-amber-200/70 hover:bg-white/15 transition-colors"
         >
-          <Settings size={18} /> Settings
+          <Settings size={18} /> 设置
         </motion.button>
       </div>
 

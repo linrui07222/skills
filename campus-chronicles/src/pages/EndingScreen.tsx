@@ -5,38 +5,38 @@ import { motion } from "framer-motion";
 const ENDINGS: Record<string, { emoji: string; title: string; desc: string }> = {
   Valedictorian: {
     emoji: "🎓",
-    title: "Valedictorian",
-    desc: "Your brilliance shone brightest. You graduate at the top of your class, ready to conquer the world.",
+    title: "毕业生代表",
+    desc: "你的才华最为耀眼。你以班级第一的成绩毕业，准备好征服世界。",
   },
   "Popular Star": {
     emoji: "⭐",
-    title: "Popular Star",
-    desc: "Everyone knows your name. You leave high school with more friends than you can count and memories to last a lifetime.",
+    title: "校园明星",
+    desc: "每个人都知道你的名字。你带着数不清的朋友和难忘的回忆离开了高中。",
   },
   "Athlete Champion": {
     emoji: "🏆",
-    title: "Athlete Champion",
-    desc: "From tryouts to trophies, you proved that dedication and sweat pay off. The crowd cheers your name one last time.",
+    title: "运动冠军",
+    desc: "从选拔到奖杯，你证明了汗水和坚持终有回报。人群最后一次为你的名字欢呼。",
   },
   "Artist Prodigy": {
     emoji: "🎨",
-    title: "Artist Prodigy",
-    desc: "Your creativity knew no bounds. The school walls still echo with your art, music, and performances.",
+    title: "艺术天才",
+    desc: "你的创造力没有边界。校园的墙壁仍在回响着你的画作、音乐和表演。",
   },
   Burnout: {
     emoji: "😩",
-    title: "Burnout",
-    desc: "The pressure was too much. You made it through, but at what cost? Sometimes surviving is enough.",
+    title: "身心俱疲",
+    desc: "压力太大了。你撑过来了，但代价是什么？有时候，能挺过来就足够了。",
   },
   "Struggling Graduate": {
     emoji: "😅",
-    title: "Struggling Graduate",
-    desc: "It wasn't easy, and the grades weren't great, but you crossed that stage. That takes guts.",
+    title: "艰难毕业",
+    desc: "并不容易，成绩也不算好，但你走过了那个舞台。这需要勇气。",
   },
   "Average Graduate": {
     emoji: "📜",
-    title: "Average Graduate",
-    desc: "High school wasn't extraordinary, but it was yours. And sometimes, ordinary is perfectly fine.",
+    title: "普通毕业生",
+    desc: "高中并不特别，但那是属于你的。有时候，平凡也挺好的。",
   },
 };
 
@@ -145,17 +145,17 @@ export default function EndingScreen() {
           transition={{ delay: 1.1 }}
         >
           <h2 className="mb-3 text-center text-sm font-semibold uppercase tracking-widest text-amber-300">
-            Stats Summary
+            数据总结
           </h2>
           <div className="grid grid-cols-2 gap-3 text-sm">
             <Stat label="GPA" value={character.gpa.toFixed(2)} />
-            <Stat label="Happiness" value={`${character.happiness}%`} />
-            <Stat label="Intelligence" value={character.stats.intelligence} />
-            <Stat label="Charisma" value={character.stats.charisma} />
-            <Stat label="Athleticism" value={character.stats.athleticism} />
-            <Stat label="Creativity" value={character.stats.creativity} />
-            <Stat label="Clubs Joined" value={clubs.length} />
-            <Stat label="Friends Made" value={friendCount} />
+            <Stat label="幸福感" value={`${character.happiness}%`} />
+            <Stat label="智力" value={character.stats.intelligence} />
+            <Stat label="魅力" value={character.stats.charisma} />
+            <Stat label="运动" value={character.stats.athleticism} />
+            <Stat label="创造力" value={character.stats.creativity} />
+            <Stat label="加入社团" value={clubs.length} />
+            <Stat label="结交朋友" value={friendCount} />
           </div>
         </motion.div>
 
@@ -167,7 +167,7 @@ export default function EndingScreen() {
             transition={{ delay: 1.4 }}
           >
             <h2 className="mb-3 text-center text-sm font-semibold uppercase tracking-widest text-amber-300">
-              Photo Album
+              相册回忆
             </h2>
             <div className="space-y-2">
               {keyMoments.map((m, i) => (
@@ -177,7 +177,7 @@ export default function EndingScreen() {
                 >
                   <span className="text-amber-400">📷</span>
                   <span className="text-purple-100">{m.eventId.replace(/evt-/g, "").replace(/-/g, " ")}</span>
-                  <span className="ml-auto text-xs text-white/40">Week {m.week}</span>
+                  <span className="ml-auto text-xs text-white/40">第{m.week}周</span>
                 </div>
               ))}
             </div>
@@ -194,13 +194,13 @@ export default function EndingScreen() {
             onClick={handlePlayAgain}
             className="flex-1 rounded-xl bg-amber-400 py-3 text-sm font-bold text-indigo-950 shadow-lg transition hover:bg-amber-300"
           >
-            Play Again
+            重新开始
           </button>
           <button
             className="flex-1 rounded-xl border border-white/20 py-3 text-sm font-bold text-white transition hover:bg-white/10"
             onClick={() => alert("Share feature coming soon!")}
           >
-            Share
+            分享
           </button>
         </motion.div>
       </div>

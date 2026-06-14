@@ -13,8 +13,8 @@ export interface DifficultyPreset extends EngineDifficultyPreset {
 export const difficultyPresets: DifficultyPreset[] = [
   {
     id: 'easy',
-    label: 'Easy',
-    description: 'A relaxed experience focused on story and character. More energy, less stress, and forgiving exams.',
+    label: '简单',
+    description: '轻松体验，专注于故事和角色。更多精力，更少压力，考试也更宽容。',
     energyMultiplier: 1.25,
     stressMultiplier: 0.7,
     masteryMultiplier: 1.3,
@@ -28,8 +28,8 @@ export const difficultyPresets: DifficultyPreset[] = [
   },
   {
     id: 'normal',
-    label: 'Normal',
-    description: 'The balanced high school experience. Manage your time wisely and you\'ll do fine.',
+    label: '普通',
+    description: '平衡的高中体验。合理安排时间，一切都会顺利的。',
     energyMultiplier: 1.0,
     stressMultiplier: 1.0,
     masteryMultiplier: 1.0,
@@ -43,8 +43,8 @@ export const difficultyPresets: DifficultyPreset[] = [
   },
   {
     id: 'hard',
-    label: 'Hard',
-    description: 'For those who want a real challenge. Every decision counts, energy is scarce, and exams are brutal.',
+    label: '困难',
+    description: '给追求真正挑战的人。每个决定都至关重要，精力紧缺，考试残酷。',
     energyMultiplier: 0.8,
     stressMultiplier: 1.4,
     masteryMultiplier: 0.75,
