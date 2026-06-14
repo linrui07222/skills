@@ -1,18 +1,24 @@
-import { HashRouter as Router, Routes, Route } from "react-router-dom";
-import MainMenu from "@/pages/MainMenu";
-import CharacterCreation from "@/pages/CharacterCreation";
-import GameHub from "@/pages/GameHub";
-import EndingScreen from "@/pages/EndingScreen";
+import { useGameStore } from '@/store/gameStore';
+import MainMenu from '@/pages/MainMenu';
+import CharacterCreation from '@/pages/CharacterCreation';
+import GameHub from '@/pages/GameHub';
+import EndingScreen from '@/pages/EndingScreen';
 
 export default function App() {
-  return (
-    <Router>
-      <Routes>
-        <Route path="/" element={<MainMenu />} />
-        <Route path="/create" element={<CharacterCreation />} />
-        <Route path="/game" element={<GameHub />} />
-        <Route path="/ending" element={<EndingScreen />} />
-      </Routes>
-    </Router>
-  );
+  const gamePhase = useGameStore((s) => s.gamePhase);
+
+  switch (gamePhase) {
+    case 'menu':
+      return <MainMenu />;
+    case 'creating':
+      return <CharacterCreation />;
+    case 'playing':
+    case 'event':
+    case 'exam':
+      return <GameHub />;
+    case 'ending':
+      return <EndingScreen />;
+    default:
+      return <MainMenu />;
+  }
 }

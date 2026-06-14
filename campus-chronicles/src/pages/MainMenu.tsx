@@ -1,4 +1,3 @@
-import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { BookOpen, Pencil, Leaf, Play, RotateCcw, Settings } from 'lucide-react';
 import { useGameStore } from '@/store/gameStore';
@@ -22,7 +21,7 @@ const btnVariants = {
 };
 
 export default function MainMenu() {
-  const navigate = useNavigate();
+  const setGamePhase = useGameStore((s) => s.setGamePhase);
   const loadGame = useGameStore((s) => s.loadGame);
   const hasSave = useGameStore((s) => s.hasSave);
   const ngplus = useGameStore((s) => s.ngplus);
@@ -32,12 +31,12 @@ export default function MainMenu() {
   const playthrough = ngplus.playthrough;
 
   const handleContinue = () => {
-    if (loadGame()) navigate('/game');
+    if (loadGame()) setGamePhase('playing');
   };
 
   const handleNGPlus = () => {
     startNGPlus();
-    navigate('/create');
+    setGamePhase('creating');
   };
 
   return (
@@ -84,7 +83,7 @@ export default function MainMenu() {
           animate="visible"
           whileHover={{ y: -3, scale: 1.03 }}
           whileTap={{ scale: 0.97 }}
-          onClick={() => navigate('/create')}
+          onClick={() => setGamePhase('creating')}
           className="flex items-center justify-center gap-2 rounded-xl bg-amber-500 px-6 py-3 text-base font-display font-bold text-navy-900 shadow-lg hover:bg-amber-400 transition-colors"
         >
           <Play size={18} /> 新游戏

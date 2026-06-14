@@ -1,5 +1,4 @@
 import { useState, useMemo, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Brain, MessageCircle, Dumbbell, Palette, Target, Clover, ChevronLeft, ChevronRight, Play } from 'lucide-react';
 import { useGameStore } from '@/store/gameStore';
@@ -21,8 +20,7 @@ const BONUS_POINTS = 15;
 export default function CharacterCreation() {
   const [step, setStep] = useState(0);
   const [talentRevealed, setTalentRevealed] = useState(false);
-  const navigate = useNavigate();
-  const { character, setCharacterName, setIdentity, allocateStat, setDifficulty, startGame, ngplus, selectTalent } = useGameStore();
+  const { character, setCharacterName, setIdentity, allocateStat, setDifficulty, startGame, ngplus, selectTalent, setGamePhase } = useGameStore();
 
   const selectedIdentity = useMemo(
     () => identities.find((i) => i.id === character.identity),
@@ -65,7 +63,7 @@ export default function CharacterCreation() {
 
   const handleNext = () => {
     if (step < totalSteps) setStep(step + 1);
-    else { startGame(); navigate('/game'); }
+    else { startGame(); setGamePhase('playing'); }
   };
 
   const handleSlider = (key: string, value: number) => {

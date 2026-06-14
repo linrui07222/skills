@@ -1,6 +1,5 @@
 import { useEffect, useMemo } from "react";
 import { useGameStore } from "@/store/gameStore";
-import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { npcs } from "@/data/npcs";
 import { identities } from "@/data/identities";
@@ -131,8 +130,7 @@ function ConfettiParticle({ index }: { index: number }) {
 }
 
 export default function EndingScreen() {
-  const navigate = useNavigate();
-  const { character, clubs, relationships, eventLog, romanceState, newGame, ngplus, startNGPlus, unlockAchievement } = useGameStore();
+  const { character, clubs, relationships, eventLog, romanceState, newGame, ngplus, startNGPlus, unlockAchievement, setGamePhase } = useGameStore();
 
   const identityData = identities.find((i) => i.id === character.identity);
 
@@ -175,12 +173,12 @@ export default function EndingScreen() {
 
   const handlePlayAgain = () => {
     newGame();
-    navigate("/");
+    setGamePhase('menu');
   };
 
   const handleNGPlus = () => {
     startNGPlus();
-    navigate("/create");
+    setGamePhase('creating');
   };
 
   return (

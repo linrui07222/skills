@@ -1,5 +1,4 @@
 import { useState, useEffect, useCallback } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useGameStore } from '@/store/gameStore';
 import { subjects } from '@/data/subjects';
@@ -434,7 +433,7 @@ function NotificationToasts() {
 // ── Main GameHub Page ──────────────────────────────────────────────────────
 
 export default function GameHub() {
-  const navigate = useNavigate();
+  const setGamePhase = useGameStore((s) => s.setGamePhase);
   const character = useGameStore((s) => s.character);
   const currentEvent = useGameStore((s) => s.currentEvent);
   const pendingEvents = useGameStore((s) => s.pendingEvents);
@@ -456,9 +455,9 @@ export default function GameHub() {
   // Check for ending condition
   useEffect(() => {
     if (character.year > 3) {
-      navigate('/ending');
+      setGamePhase('ending');
     }
-  }, [character.year, navigate]);
+  }, [character.year, setGamePhase]);
 
   // Check for pending events and show the first one
   useEffect(() => {
