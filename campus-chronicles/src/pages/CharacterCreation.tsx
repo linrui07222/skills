@@ -130,7 +130,8 @@ export default function CharacterCreation() {
                     <button
                       key={identity.id}
                       onClick={() => setIdentity(identity.id)}
-                      className={`flex flex-col items-center p-3 rounded-xl border-2 transition-all ${character.identity === identity.id ? 'border-orange-500 bg-orange-50' : 'border-gray-200 hover:border-orange-300'}`}
+                      onTouchEnd={() => setIdentity(identity.id)}
+                      className={`flex flex-col items-center p-3 rounded-xl border-2 transition-all cursor-pointer select-none ${character.identity === identity.id ? 'border-orange-500 bg-orange-50' : 'border-gray-200 hover:border-orange-300'}`}
                     >
                       <span className="text-3xl">{identity.emoji}</span>
                       <span className="text-xs mt-1 text-gray-700 font-medium">{identity.name}</span>
@@ -296,7 +297,12 @@ export default function CharacterCreation() {
             <div className="space-y-4">
               <h2 className="text-xl font-bold text-center text-gray-800">选择难度</h2>
               {difficultyPresets.map((d) => (
-                <button key={d.id} onClick={() => setDifficulty(d.id)} className={`w-full text-left bg-white rounded-2xl shadow-lg p-5 border-2 transition-all ${character.difficulty === d.id ? 'border-orange-500 ring-2 ring-orange-200' : 'border-transparent hover:border-orange-200'}`}>
+                <button
+                  key={d.id}
+                  onClick={() => setDifficulty(d.id)}
+                  onTouchEnd={() => setDifficulty(d.id)}
+                  className={`w-full text-left bg-white rounded-2xl shadow-lg p-5 border-2 transition-all cursor-pointer select-none ${character.difficulty === d.id ? 'border-orange-500 ring-2 ring-orange-200' : 'border-transparent hover:border-orange-200'}`}
+                >
                   <h3 className="font-bold text-gray-800">{d.label}</h3>
                   <p className="text-sm text-gray-500 mt-1">{d.description}</p>
                   <div className="flex gap-4 mt-3 text-xs text-gray-600">
@@ -314,11 +320,19 @@ export default function CharacterCreation() {
       {/* Navigation */}
       <div className="flex gap-4 mt-8">
         {step > 0 && (
-          <button onClick={() => setStep(step - 1)} className="flex items-center gap-1 px-5 py-2 rounded-xl bg-gray-200 text-gray-700 hover:bg-gray-300 transition-colors">
+          <button onClick={() => setStep(step - 1)} onMouseDown={(e) => e.preventDefault()} className="flex items-center gap-1 px-5 py-2 rounded-xl bg-gray-200 text-gray-700 hover:bg-gray-300 transition-colors cursor-pointer select-none">
             <ChevronLeft className="w-4 h-4" /> 返回
           </button>
         )}
-        <button onClick={handleNext} disabled={!canNext} className="flex items-center gap-1 px-5 py-2 rounded-xl bg-orange-500 text-white hover:bg-orange-600 disabled:opacity-40 disabled:cursor-not-allowed transition-colors">
+        <button
+          onClick={handleNext}
+          onMouseDown={(e) => { if (!canNext) e.preventDefault(); }}
+          className={`flex items-center gap-1 px-5 py-2 rounded-xl transition-colors cursor-pointer select-none ${
+            canNext
+              ? 'bg-orange-500 text-white hover:bg-orange-600'
+              : 'bg-gray-300 text-gray-500'
+          }`}
+        >
           {step === totalSteps ? (<><Play className="w-4 h-4" /> 开始游戏</>) : (<>下一步 <ChevronRight className="w-4 h-4" /></>)}
         </button>
       </div>
